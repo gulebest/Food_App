@@ -4,11 +4,10 @@ import '../models/product.dart';
 class ProductProvider with ChangeNotifier {
   // =======================================================
   // PRODUCT LIST WITH ADDED CATEGORY FIELD
-  // =======================================================
   final List<Product> _products = [
     Product(
       id: "1",
-      name: "Cheeseburger Wendy's",
+      name: "Cheeseburger Wendy's Burger",
       description:
           "Juicy grilled beef patty topped with melted cheese, crispy veggies, and soft buns.",
       image: "assets/burger1.png",
@@ -19,7 +18,7 @@ class ProductProvider with ChangeNotifier {
     ),
     Product(
       id: "2",
-      name: "Veggie Burger",
+      name: "HumburgerVeggie Burger",
       description:
           "A healthy plant-based burger with fresh lettuce, tomato, and special sauce.",
       image: "assets/burger2.png",
@@ -30,7 +29,7 @@ class ProductProvider with ChangeNotifier {
     ),
     Product(
       id: "3",
-      name: "Chicken Burger",
+      name: "Humburger Chicken Burger",
       description:
           "Crispy chicken patty paired with mayo, lettuce, and soft buns.",
       image: "assets/burger3.png",
@@ -41,7 +40,7 @@ class ProductProvider with ChangeNotifier {
     ),
     Product(
       id: "4",
-      name: "Double Beef Burger",
+      name: "Humburger Double Beef Burger",
       description:
           "Double grilled beef patties, cheese, onions, pickles, and sesame buns.",
       image: "assets/burger4.png",
@@ -52,7 +51,7 @@ class ProductProvider with ChangeNotifier {
     ),
     Product(
       id: "5",
-      name: "Spicy Burger",
+      name: "HumburgerSpicy Burger",
       description:
           "Hot & spicy beef patty with jalapeños, chili sauce, and cheese.",
       image: "assets/burger5.png",
@@ -63,7 +62,7 @@ class ProductProvider with ChangeNotifier {
     ),
     Product(
       id: "6",
-      name: "Mushroom Swiss Burger",
+      name: "Humburger Mushroom Swiss Burger",
       description:
           "Savory beef patty topped with sautéed mushrooms, Swiss cheese, lettuce, and our signature sauce.",
       image: "assets/burger6.png",

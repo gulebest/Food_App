@@ -11,10 +11,6 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double rating = product.rating;
-    final int fullStars = rating.floor();
-    final bool halfStar = rating - fullStars >= 0.5;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -29,9 +25,9 @@ class ProductCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // =====================
-          //       IMAGE
-          // =====================
+          // ==========================
+          //          IMAGE
+          // ==========================
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: AspectRatio(
@@ -49,15 +45,15 @@ class ProductCard extends StatelessWidget {
             ),
           ),
 
-          // =====================
-          //       CONTENT
-          // =====================
+          // ==========================
+          //         CONTENT
+          // ==========================
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // NAME
+                // PRODUCT NAME
                 Text(
                   product.name,
                   maxLines: 2,
@@ -68,45 +64,27 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
-                // =====================
-                //  RATING + FAVORITE
-                // =====================
+                // ==========================
+                // RATING ⭐ + FAVORITE ❤️
+                // ==========================
                 Row(
                   children: [
-                    // ⭐ RATING STARS ⭐
-                    Row(
-                      children: [
-                        ...List.generate(fullStars, (index) {
-                          return const Icon(
-                            Icons.star,
-                            size: 16,
-                            color: Colors.orange,
-                          );
-                        }),
-
-                        if (halfStar)
-                          const Icon(
-                            Icons.star_half,
-                            size: 16,
-                            color: Colors.orange,
-                          ),
-
-                        ...List.generate(
-                          5 - fullStars - (halfStar ? 1 : 0),
-                          (index) => const Icon(
-                            Icons.star_border,
-                            size: 16,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ],
+                    // ⭐ Single star + number
+                    Icon(Icons.star, color: Colors.orange.shade700, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      product.rating.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
                     ),
 
                     const Spacer(),
 
-                    // ❤️ FAVORITE BUTTON
+                    // ❤️ Favorite button
                     Consumer<FavoriteProvider>(
                       builder: (context, fav, _) {
                         final bool isFav = fav.isFavorite(product.id);
