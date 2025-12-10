@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class SupportScreen extends StatefulWidget {
@@ -11,10 +13,19 @@ class _SupportScreenState extends State<SupportScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
-
   bool _isTyping = false;
 
-  // Auto scroll to bottom
+  final List<String> _autoReplies = [
+    "Thanks for reaching out! Our support team will get back to you shortly.",
+    "We're checking your query and will respond soon!",
+    "Your message is important to us. Please wait a moment.",
+    "Thanks for contacting support! We're on it.",
+    "We appreciate your patience. Someone will assist you shortly.",
+    "Got your message! Let me find the best answer for you.",
+    "Hang tight! We're working on your request.",
+    "Thanks! Our support team will reply shortly.",
+  ];
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 150), () {
       if (_scrollController.hasClients) {
@@ -39,19 +50,25 @@ class _SupportScreenState extends State<SupportScreen> {
     _messageController.clear();
     _scrollToBottom();
 
-    // ⭐ Fake backend delay
+    // Simulate AI-like auto-reply with random response after delay
     Future.delayed(const Duration(seconds: 2), () {
+      final random = Random();
+      final reply = _autoReplies[random.nextInt(_autoReplies.length)];
+
       setState(() {
         _isTyping = false;
-        _messages.add({
-          "sender": "support",
-          "text":
-              "Thanks for reaching out! Our support team will get back to you shortly.",
-        });
+        _messages.add({"sender": "support", "text": reply});
       });
 
       _scrollToBottom();
     });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,7 +85,6 @@ class _SupportScreenState extends State<SupportScreen> {
         ),
       ),
 
-      // Body
       body: Column(
         children: [
           Expanded(
@@ -77,7 +93,6 @@ class _SupportScreenState extends State<SupportScreen> {
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                // Typing indicator message
                 if (_isTyping && index == _messages.length) {
                   return Align(
                     alignment: Alignment.centerLeft,
@@ -105,13 +120,16 @@ class _SupportScreenState extends State<SupportScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
                       color: isUser
-                          ? Colors.orange.shade300
+                          ? const Color(0xFFEF2A39).withOpacity(0.8)
                           : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       msg["text"],
-                      style: const TextStyle(fontSize: 15),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isUser ? Colors.white : Colors.black87,
+                      ),
                     ),
                   ),
                 );
@@ -141,6 +159,8 @@ class _SupportScreenState extends State<SupportScreen> {
                         borderSide: BorderSide.none,
                       ),
                     ),
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -148,7 +168,7 @@ class _SupportScreenState extends State<SupportScreen> {
                   onTap: _sendMessage,
                   child: CircleAvatar(
                     radius: 25,
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFEF2A39),
                     child: const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
