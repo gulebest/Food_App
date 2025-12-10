@@ -19,24 +19,61 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final product = Provider.of<ProductProvider>(
-      context,
-    ).findById(widget.productId);
+    final productProvider = Provider.of<ProductProvider>(context);
+    final product = productProvider.findById(widget.productId);
+
+    bool isFav = productProvider.isFavorite(product.id);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 300,
-              width: double.infinity,
-              child: Image.asset(product.image, fit: BoxFit.contain),
+            // ============================
+            // TOP IMAGE SECTION WITH HERO
+            // ============================
+            Stack(
+              children: [
+                Hero(
+                  tag: product.id,
+                  child: Container(
+                    height: 310,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    child: Image.asset(product.image, fit: BoxFit.contain),
+                  ),
+                ),
+
+                // Back + Favorite buttons
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: _circleBtn(
+                    Icons.arrow_back,
+                    () => Navigator.pop(context),
+                  ),
+                ),
+
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _circleBtn(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    () {
+                      productProvider.toggleFavorite(product.id);
+                    },
+                    color: Colors.red,
+                  ),
+                ),
+              ],
             ),
 
+            // ============================
+            // CONTENT AREA
+            // ============================
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -45,20 +82,37 @@ class _ProductDetailsState extends State<ProductDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 15),
+
+                      // ====================
+                      // PRODUCT NAME
+                      // ====================
                       Text(
                         product.name,
                         style: const TextStyle(
-                          fontSize: 26,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
 
+                      // ====================
+                      // RATING + CALORIES
+                      // ====================
                       Row(
                         children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 22),
-                          const SizedBox(width: 5),
+                          ...List.generate(
+                            5,
+                            (index) => Icon(
+                              Icons.star,
+                              size: 22,
+                              color: index < product.rating
+                                  ? Colors.orange
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Text(
                             product.rating.toString(),
                             style: const TextStyle(
@@ -66,7 +120,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 18),
                           Text(
                             product.calories,
                             style: const TextStyle(
@@ -79,6 +133,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 20),
 
+                      // ====================
+                      // DESCRIPTION
+                      // ====================
                       Text(
                         product.description,
                         style: const TextStyle(
@@ -90,13 +147,16 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 30),
 
+                      // ====================
+                      // PRICE + QUANTITY
+                      // ====================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             "\$${product.price.toStringAsFixed(2)}",
                             style: const TextStyle(
-                              fontSize: 26,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFFEF2A39),
                             ),
@@ -116,7 +176,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 child: Text(
                                   quantity.toString(),
                                   style: const TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -129,9 +189,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                         ],
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 25),
 
-                      // 🔥 ADD TO CART BUTTON ADDED
+                      // ====================
+                      // ADD TO CART BUTTON
+                      // ====================
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -159,6 +221,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
+                                backgroundColor: Colors.black87,
                                 content: Text("${product.name} added to cart"),
                               ),
                             );
@@ -174,7 +237,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         ),
                       ),
 
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -186,15 +249,43 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
+  // ============================
+  // SMALL REUSABLE BUTTON (TOP)
+  // ============================
+  Widget _circleBtn(
+    IconData icon,
+    VoidCallback onTap, {
+    Color color = Colors.black,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.1)),
+          ],
+        ),
+        child: Icon(icon, color: color),
+      ),
+    );
+  }
+
+  // ============================
+  // QTY BUTTON
+  // ============================
   Widget _qtyButton(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        width: 38,
-        height: 38,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
           color: const Color(0xFFF3F3F3),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, size: 22, color: Colors.black),
       ),

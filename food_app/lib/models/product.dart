@@ -6,6 +6,7 @@ class Product {
   final double price;
   final double rating;
   final String calories;
+  final String category; // ⭐ NEW FIELD
 
   Product({
     required this.id,
@@ -15,5 +16,6 @@ class Product {
     required this.price,
     required this.rating,
     required this.calories,
+    required this.category,
   });
 }
