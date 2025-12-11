@@ -23,6 +23,8 @@ class _ProductDetailsState extends State<ProductDetails> {
     final product = productProvider.findById(widget.productId);
     bool isFav = productProvider.isFavorite(product.id);
 
+    double totalPrice = product.price * quantity;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -76,7 +78,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             ),
 
             // ==========================
-            // CONTENT
+            // CONTENT BODY
             // ==========================
             Expanded(
               child: Container(
@@ -102,7 +104,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 10),
 
-                      // ⭐ RATING
+                      // ⭐ RATING + TIME
                       Row(
                         children: [
                           const Icon(
@@ -128,7 +130,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 20),
 
-                      // DESCRIPTION
+                      // LONG DESCRIPTION
                       Text(
                         product.description,
                         style: const TextStyle(
@@ -141,98 +143,129 @@ class _ProductDetailsState extends State<ProductDetails> {
                       const SizedBox(height: 30),
 
                       // ==========================
-                      // SPICY LEVEL
+                      // SPICY + PORTION IN SAME ROW
                       // ==========================
-                      const Text(
-                        "Spicy",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text("Mild", style: TextStyle(color: Colors.green)),
-                          Text("Hot", style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-
-                      Slider(
-                        value: spicyLevel,
-                        min: 1,
-                        max: 3,
-                        divisions: 2,
-                        activeColor: Color(0xFFEF2A39),
-                        inactiveColor: Colors.grey.shade300,
-                        onChanged: (value) {
-                          setState(() => spicyLevel = value);
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==========================
-                      // PORTION (QTY)
-                      // ==========================
-                      const Text(
-                        "Portion",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _qtyButton(Icons.remove, () {
-                            if (quantity > 1) {
-                              setState(() => quantity--);
-                            }
-                          }),
-                          Container(
-                            width: 50,
-                            alignment: Alignment.center,
-                            child: Text(
-                              quantity.toString(),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          // SPICY SECTION
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Spicy",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: const [
+                                    Text(
+                                      "Mild",
+                                      style: TextStyle(color: Colors.green),
+                                    ),
+                                    Text(
+                                      "Hot",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                                Slider(
+                                  value: spicyLevel,
+                                  min: 1,
+                                  max: 3,
+                                  divisions: 2,
+                                  activeColor: Color(0xFFEF2A39),
+                                  inactiveColor: Colors.grey.shade300,
+                                  onChanged: (value) {
+                                    setState(() => spicyLevel = value);
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          _qtyButton(Icons.add, () {
-                            setState(() => quantity++);
-                          }),
+
+                          const SizedBox(width: 20),
+
+                          // PORTION SECTION ON SAME ROW
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Portion",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  _qtyButton(Icons.remove, () {
+                                    if (quantity > 1) {
+                                      setState(() => quantity--);
+                                    }
+                                  }),
+                                  Container(
+                                    width: 45,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      quantity.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  _qtyButton(Icons.add, () {
+                                    setState(() => quantity++);
+                                  }),
+                                ],
+                              ),
+                            ],
+                          ),
                         ],
                       ),
 
                       const SizedBox(height: 35),
 
                       // ==========================
-                      // PRICE + ORDER BUTTON
+                      // PRICE + ORDER NOW
                       // ==========================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "\$${product.price.toStringAsFixed(2)}",
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFEF2A39),
+                          // PRICE IN NON-CLICKABLE BUTTON STYLE
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFECEE),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              "\$${totalPrice.toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontSize: 23,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFEF2A39),
+                              ),
                             ),
                           ),
 
-                          // ORDER NOW → PAYMENT PAGE
+                          // ORDER NOW BUTTON
                           SizedBox(
                             height: 55,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 20, 1, 2),
+                                backgroundColor: Colors.black,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 45,
                                 ),
@@ -246,7 +279,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   listen: false,
                                 );
 
-                                // ADD ITEMS TO CART
                                 for (int i = 0; i < quantity; i++) {
                                   cart.addToCart(
                                     productId: product.id,
@@ -256,7 +288,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   );
                                 }
 
-                                // GO TO PAYMENT PAGE
                                 Navigator.pushNamed(context, "/payment");
                               },
                               child: const Text(
@@ -285,7 +316,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   // =============================
-  // TOP SMALL BUTTON
+  // SMALL ROUND TOP BUTTON
   // =============================
   Widget _circleBtn(
     IconData icon,
@@ -310,7 +341,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   // =============================
-  // QUANTITY BUTTON
+  // QTY BUTTON
   // =============================
   Widget _qtyButton(IconData icon, VoidCallback onTap) {
     return InkWell(
@@ -319,7 +350,7 @@ class _ProductDetailsState extends State<ProductDetails> {
         width: 42,
         height: 42,
         decoration: BoxDecoration(
-          color: Color(0xFFEF2A39),
+          color: const Color(0xFFEF2A39),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, size: 22, color: Colors.white),
