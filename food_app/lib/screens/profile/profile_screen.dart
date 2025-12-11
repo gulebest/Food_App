@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/user_provider.dart';
+import '../auth/login_screen.dart'; // ⭐ IMPORTANT: added import
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -72,11 +74,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Payment Details
                   _navTile("Payment Details", Icons.credit_card),
                   const SizedBox(height: 10),
 
-                  // Order History
                   _navTile("Order history", Icons.history),
                   const SizedBox(height: 30),
 
@@ -87,7 +87,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: ElevatedButton(
                           onPressed: () {
                             if (_editing) {
-                              // Save changes
                               user.updateUser(
                                 name: nameCtrl.text,
                                 email: emailCtrl.text,
@@ -115,15 +114,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       const SizedBox(width: 14),
 
-                      // Logout Button
+                      // ⭐ LOGOUT BUTTON — updated
                       ElevatedButton(
                         onPressed: () {
+                          // CLEAR PROVIDER USER DATA
                           Provider.of<UserProvider>(
                             context,
                             listen: false,
                           ).logout();
 
-                          Navigator.pop(context); // Back to previous
+                          // REDIRECT TO LOGIN SCREEN
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -153,6 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ---------------- Input Field Widget ----------------
   Widget _input(
     String title,
     TextEditingController ctrl, {
@@ -188,6 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ---------------- Navigation Tiles ----------------
   Widget _navTile(String text, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
