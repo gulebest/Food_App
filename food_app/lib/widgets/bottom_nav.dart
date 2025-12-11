@@ -1,39 +1,25 @@
 import 'package:flutter/material.dart';
-import '../screens/home/home_screen.dart';
-import '../screens/profile/profile_screen.dart';
-import '../screens/support/support_screen.dart';
-import '../screens/cart/cart_screen.dart';
 
-class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({super.key});
+class BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTap;
 
-  @override
-  State<BottomNavBar> createState() => _BottomNavBarState();
-}
-
-class _BottomNavBarState extends State<BottomNavBar> {
-  int _index = 0;
-
-  final List<Widget> pages = const [
-    HomeScreen(),
-    CartScreen(),
-    ProfileScreen(),
-    SupportScreen(),
-  ];
+  const BottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: _index,
+      currentIndex: currentIndex,
       elevation: 10,
       selectedItemColor: const Color(0xFFEF2A39),
       unselectedItemColor: Colors.grey,
       showSelectedLabels: false,
       showUnselectedLabels: false,
-      onTap: (i) {
-        setState(() => _index = i);
-        Navigator.push(context, MaterialPageRoute(builder: (_) => pages[i]));
-      },
+      onTap: onTap,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
         BottomNavigationBarItem(
@@ -46,7 +32,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.chat_bubble_outline),
-          label: "Chat",
+          label: "Support",
         ),
       ],
     );

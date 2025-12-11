@@ -12,8 +12,8 @@ import '../../widgets/product_card.dart';
 import '../../widgets/bottom_nav.dart';
 
 import '../product/product_details.dart';
-import '../cart/cart_screen.dart';
 import '../profile/profile_screen.dart';
+import '../cart/cart_screen.dart';
 import '../support/support_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,42 +25,68 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
-  int _selectedIndex = 0;
   String _selectedCategory = 'All';
   String _search = '';
+  int _bottomIndex = 0;
 
   final List<String> _categories = ['All', 'Combos', 'Sliders', 'Classics'];
 
   @override
   void initState() {
     super.initState();
+
+    // Fake shimmer loading
     Timer(const Duration(milliseconds: 1200), () {
       if (mounted) setState(() => _loading = false);
     });
   }
 
+  void _onBottomTap(int index) {
+    setState(() => _bottomIndex = index);
+
+    switch (index) {
+      case 0:
+        break; // Already home
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CartScreen()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SupportScreen()),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
-    final cart = Provider.of<CartProvider>(context);
 
-    // Filtering Logic
+    // Filtered products
     final filteredProducts = productProvider.products.where((p) {
-      final matchesCategory =
+      final categoryMatch =
           _selectedCategory == 'All' || p.category == _selectedCategory;
 
-      final matchesSearch =
-          _search.trim().isEmpty ||
-          p.name.toLowerCase().contains(_search.toLowerCase()) ||
-          p.description.toLowerCase().contains(_search.toLowerCase());
+      final searchMatch =
+          _search.isEmpty ||
+          p.name.toLowerCase().contains(_search.toLowerCase());
 
-      return matchesCategory && matchesSearch;
+      return categoryMatch && searchMatch;
     }).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // Floating Action Button
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFEF2A39),
         elevation: 6,
@@ -69,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      // ------------------------------- BODY --------------------------------
       body: SafeArea(
         child: Column(
           children: [
@@ -78,10 +103,11 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  Expanded(
+                  // Title
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Foodago',
                           style: TextStyle(
@@ -98,9 +124,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  // Cart With Badge
+                  // CART ICON + BADGE
                   Consumer<CartProvider>(
-                    builder: (context, cart, _) => Stack(
+                    builder: (context, cart, child) => Stack(
                       clipBehavior: Clip.none,
                       children: [
                         IconButton(
@@ -117,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-
                         if (cart.itemCount > 0)
                           Positioned(
                             right: 4,
@@ -143,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(width: 8),
 
-                  // PROFILE → Go to ProfileScreen
+                  // PROFILE ICON
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -220,13 +245,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemCount: _categories.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, i) {
-                  final c = _categories[i];
-                  final active = c == _selectedCategory;
+                  final category = _categories[i];
+                  final active = category == _selectedCategory;
 
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = c),
+                    onTap: () => setState(() => _selectedCategory = category),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
+                      duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 10,
@@ -234,11 +259,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         color: active
                             ? const Color(0xFFEF2A39)
-                            : Colors.grey.shade200,
+                            : Colors.grey[200],
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        c,
+                        category,
                         style: TextStyle(
                           color: active ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.w600,
@@ -274,8 +299,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisSpacing: 15,
                               mainAxisSpacing: 15,
                             ),
-                        itemBuilder: (ctx, idx) {
-                          final product = filteredProducts[idx];
+                        itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+
                           return GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -296,12 +322,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // -------------------- WORKING NAV BAR ---------------------
-      bottomNavigationBar: const BottomNavBar(),
+      // ---------------- BOTTOM NAV ----------------
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _bottomIndex,
+        onTap: _onBottomTap,
+      ),
     );
   }
 }
 
+// ---------------- SHIMMER GRID ----------------
 class _ShimmerGrid extends StatelessWidget {
   const _ShimmerGrid({super.key});
 
@@ -316,7 +346,7 @@ class _ShimmerGrid extends StatelessWidget {
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
       ),
-      itemBuilder: (_, __) {
+      itemBuilder: (context, index) {
         return Shimmer.fromColors(
           baseColor: Colors.grey.shade300,
           highlightColor: Colors.grey.shade100,
