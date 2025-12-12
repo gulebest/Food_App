@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
-import '../auth/login_screen.dart'; // ⭐ IMPORTANT: added import
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,20 +14,34 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _editing = false;
 
+  late TextEditingController nameCtrl;
+  late TextEditingController emailCtrl;
+  late TextEditingController addressCtrl;
+  late TextEditingController passwordCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = Provider.of<UserProvider>(context, listen: false);
+
+    nameCtrl = TextEditingController(text: user.currentUser?["name"] ?? "");
+    emailCtrl = TextEditingController(text: user.currentUser?["email"] ?? "");
+    addressCtrl = TextEditingController(
+      text: user.currentUser?["address"] ?? "",
+    );
+    passwordCtrl = TextEditingController();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context);
-
-    final nameCtrl = TextEditingController(text: user.name);
-    final emailCtrl = TextEditingController(text: user.email);
-    final addressCtrl = TextEditingController(text: user.address);
-    final passwordCtrl = TextEditingController(text: user.password);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ---------------- HEADER SECTION ----------------
+          // HEADER
           Container(
             height: 200,
             width: double.infinity,
@@ -39,19 +53,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
             ),
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CircleAvatar(
                   radius: 48,
-                  backgroundImage: AssetImage(user.profileImage),
+                  backgroundImage: AssetImage("assets/images/profile.png"),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
               ],
             ),
           ),
 
-          // ---------------- PROFILE FORM ----------------
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -67,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
 
                   _input(
-                    "Password",
+                    "Password (leave blank to keep)",
                     passwordCtrl,
                     enabled: _editing,
                     obscure: true,
@@ -82,24 +95,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Row(
                     children: [
-                      // Edit Profile Button
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_editing) {
-                              user.updateUser(
-                                name: nameCtrl.text,
-                                email: emailCtrl.text,
-                                address: addressCtrl.text,
-                                password: passwordCtrl.text,
+                              final ok = await user.updateUserProfile(
+                                name: nameCtrl.text.trim(),
+                                email: emailCtrl.text.trim(),
+                                address: addressCtrl.text.trim(),
+                                password: passwordCtrl.text.trim(),
                               );
+
+                              if (!ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Failed to update"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              passwordCtrl.clear();
                             }
+
                             setState(() => _editing = !_editing);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _editing
                                 ? Colors.green
-                                : const Color(0xFF2A2A2A),
+                                : Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -114,16 +138,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       const SizedBox(width: 14),
 
-                      // ⭐ LOGOUT BUTTON — updated
                       ElevatedButton(
                         onPressed: () {
-                          // CLEAR PROVIDER USER DATA
                           Provider.of<UserProvider>(
                             context,
                             listen: false,
                           ).logout();
 
-                          // REDIRECT TO LOGIN SCREEN
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
@@ -141,7 +162,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Colors.red),
+                            side: const BorderSide(
+                              color: Colors.red,
+                              width: 1.3,
+                            ),
                           ),
                         ),
                         child: const Text(
@@ -160,7 +184,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ---------------- Input Field Widget ----------------
   Widget _input(
     String title,
     TextEditingController ctrl, {
@@ -196,7 +219,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ---------------- Navigation Tiles ----------------
   Widget _navTile(String text, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),

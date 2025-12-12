@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/user_provider.dart';
+import '../auth/login_screen.dart';
 import '../home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,24 +20,41 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    _startAnimation();
+    _checkAuth();
+  }
 
-    // Animation for fade-in
+  void _startAnimation() {
     _controller = AnimationController(
-      vsync: this,
       duration: const Duration(milliseconds: 1200),
+      vsync: this,
     );
 
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
     _controller.forward();
+  }
 
-    // Navigate to Home after delay
-    Future.delayed(const Duration(seconds: 2), () {
+  Future<void> _checkAuth() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    await Future.delayed(const Duration(seconds: 2)); // Splash wait
+
+    await userProvider.autoLogin();
+
+    if (!mounted) return;
+
+    if (userProvider.isAuthenticated) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    });
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -54,10 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFF939B), // Top color from Figma
-              Color(0xFFEF2A39), // Bottom color from Figma
-            ],
+            colors: [Color(0xFFFF939B), Color(0xFFEF2A39)],
           ),
         ),
         child: FadeTransition(
@@ -65,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Burger Image (replace with your asset)
               SizedBox(
                 height: 250,
                 child: Image.asset(
@@ -73,17 +88,13 @@ class _SplashScreenState extends State<SplashScreen>
                   fit: BoxFit.contain,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // App Title
               const Text(
                 "Foodago",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 42,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
                 ),
               ),
             ],
