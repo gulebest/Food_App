@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
+import '../home/home_screen.dart';
 import 'login_screen.dart';
-import '../home/home_screen.dart'; // <-- UPDATE THIS TO YOUR HOME PAGE
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,27 +15,25 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController fullname = TextEditingController();
-  final TextEditingController email = TextEditingController();
-  final TextEditingController phone = TextEditingController();
-  final TextEditingController password = TextEditingController();
-  final TextEditingController confirm = TextEditingController();
+  final fullname = TextEditingController();
+  final email = TextEditingController();
+  final phone = TextEditingController();
+  final password = TextEditingController();
+  final confirm = TextEditingController();
 
-  bool hidePassword = true;
+  bool hidePass = true;
   bool hideConfirm = true;
   bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // TOP BANNER IMAGE
             Container(
-              width: double.infinity,
               height: 260,
+              width: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage("assets/auth_food.png"),
@@ -49,6 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const SizedBox(height: 10),
+
             const Text(
               "Join our food community!",
               style: TextStyle(color: Colors.black54, fontSize: 16),
@@ -62,92 +64,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // FULL NAME
-                    TextFormField(
-                      controller: fullname,
-                      decoration: _input("Full Name"),
-                      validator: (v) =>
-                          v!.isEmpty ? "Enter your full name" : null,
-                    ),
+                    _input(fullname, "Full Name"),
                     const SizedBox(height: 18),
 
-                    // EMAIL
-                    TextFormField(
-                      controller: email,
-                      decoration: _input("Email"),
+                    _input(
+                      email,
+                      "Email",
                       validator: (v) {
-                        if (v!.isEmpty) return "Enter your email";
+                        if (v!.isEmpty) return "Enter email";
                         if (!v.contains("@")) return "Invalid email";
                         return null;
                       },
                     ),
                     const SizedBox(height: 18),
 
-                    // PHONE NUMBER
-                    TextFormField(
-                      controller: phone,
-                      keyboardType: TextInputType.phone,
-                      decoration: _input("Phone Number"),
-                      validator: (v) =>
-                          v!.length < 9 ? "Enter a valid phone number" : null,
-                    ),
-                    const SizedBox(height: 18),
-
-                    // PASSWORD
-                    TextFormField(
-                      controller: password,
-                      obscureText: hidePassword,
-                      decoration: _input("Password").copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            hidePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () =>
-                              setState(() => hidePassword = !hidePassword),
-                        ),
-                      ),
+                    _input(
+                      phone,
+                      "Phone Number",
+                      keyboard: TextInputType.phone,
                       validator: (v) {
-                        if (v!.isEmpty) return "Enter password";
-                        if (v.length < 6) return "Min 6 characters";
+                        if (v!.length < 9) return "Invalid phone";
                         return null;
                       },
                     ),
                     const SizedBox(height: 18),
 
-                    // CONFIRM PASSWORD
-                    TextFormField(
-                      controller: confirm,
-                      obscureText: hideConfirm,
-                      decoration: _input("Confirm Password").copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            hideConfirm
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () =>
-                              setState(() => hideConfirm = !hideConfirm),
-                        ),
-                      ),
+                    _password(
+                      password,
+                      "Password",
+                      hidePass,
+                      () => setState(() => hidePass = !hidePass),
+                    ),
+                    const SizedBox(height: 18),
+
+                    _password(
+                      confirm,
+                      "Confirm Password",
+                      hideConfirm,
+                      () => setState(() => hideConfirm = !hideConfirm),
                       validator: (v) {
-                        if (v!.isEmpty) return "Confirm your password";
+                        if (v!.isEmpty) return "Confirm password";
                         if (v != password.text) return "Passwords do not match";
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 28),
 
-                    // CREATE ACCOUNT BUTTON
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        style: _btnStyle(),
-                        onPressed: isLoading ? null : _registerUser,
+                        style: _btn(),
+                        onPressed: isLoading ? null : _register,
                         child: isLoading
                             ? const CircularProgressIndicator(
                                 color: Colors.white,
@@ -162,21 +131,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
-                    // GO TO LOGIN
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text("Already have an account? "),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const LoginScreen()),
-                            );
-                          },
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                          ),
                           child: const Text(
                             "Login",
                             style: TextStyle(
@@ -199,44 +166,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ============================
-  // REGISTER LOGIC
-  // ============================
-  void _registerUser() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => isLoading = true);
-
-      // Fake delay (Simulating API call)
-      await Future.delayed(const Duration(seconds: 1));
-
-      setState(() => isLoading = false);
-
-      // SUCCESS → GO DIRECTLY TO HOME
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
+  Widget _input(
+    TextEditingController ctrl,
+    String label, {
+    TextInputType? keyboard,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: ctrl,
+      keyboardType: keyboard,
+      decoration: _field(label),
+      validator: validator ?? (v) => v!.isEmpty ? "Enter $label" : null,
+    );
   }
 
-  // ============================
-  // STYLES
-  // ============================
-  InputDecoration _input(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Color(0xFFEF2A39)),
-        borderRadius: BorderRadius.circular(14),
+  Widget _password(
+    TextEditingController ctrl,
+    String label,
+    bool hide,
+    VoidCallback toggle, {
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: ctrl,
+      obscureText: hide,
+      decoration: _field(label).copyWith(
+        suffixIcon: IconButton(
+          icon: Icon(hide ? Icons.visibility_off : Icons.visibility),
+          onPressed: toggle,
+        ),
       ),
+      validator: validator ?? (v) => v!.length < 6 ? "Min 6 characters" : null,
     );
   }
 
-  ButtonStyle _btnStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFEF2A39),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final message = await auth.register(
+      fullname.text.trim(),
+      email.text.trim(),
+      phone.text.trim(),
+      password.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+
+    if (message != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
+
+  InputDecoration _field(String label) => InputDecoration(
+    labelText: label,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+    focusedBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFFEF2A39)),
+      borderRadius: BorderRadius.circular(14),
+    ),
+  );
+
+  ButtonStyle _btn() => ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFFEF2A39),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  );
 }

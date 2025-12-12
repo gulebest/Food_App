@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/user_provider.dart';
 import '../home/home_screen.dart';
 import 'register_screen.dart';
 
@@ -10,156 +13,109 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
-
+  final email = TextEditingController();
+  final password = TextEditingController();
+  bool hidePass = true;
   bool isLoading = false;
-  bool hidePassword = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // =======================
-            // TOP ILLUSTRATION
-            // =======================
             Container(
-              width: double.infinity,
               height: 260,
+              width: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage("assets/auth_food.png"), // <--- your image
+                  image: AssetImage("assets/auth_food.png"),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
 
-            // =======================
-            // WELCOME TEXT
-            // =======================
             const Text(
-              "Welcome Back!",
+              "Welcome Back",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 8),
+
             const Text(
-              "Login to continue ordering",
+              "Login to your account",
               style: TextStyle(color: Colors.black54, fontSize: 16),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
-            // =======================
-            // FORM
-            // =======================
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // EMAIL
-                    TextFormField(
-                      controller: email,
-                      decoration: _inputStyle("Email"),
-                      validator: (value) {
-                        if (value!.isEmpty) return "Enter email";
-                        if (!value.contains("@")) return "Invalid email";
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
+              child: Column(
+                children: [
+                  TextField(controller: email, decoration: _field("Email")),
+                  const SizedBox(height: 18),
 
-                    // PASSWORD
-                    TextFormField(
-                      controller: password,
-                      obscureText: hidePassword,
-                      decoration: _inputStyle("Password").copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            hidePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() => hidePassword = !hidePassword);
-                          },
+                  TextField(
+                    controller: password,
+                    obscureText: hidePass,
+                    decoration: _field("Password").copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          hidePass ? Icons.visibility_off : Icons.visibility,
                         ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) return "Enter password";
-                        if (value.length < 6) {
-                          return "Password must be at least 6 characters";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 30),
-
-                    // =======================
-                    // LOGIN BUTTON
-                    // =======================
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        style: _btnStyle(),
-                        onPressed: isLoading ? null : _loginUser,
-                        child: isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                "LOGIN",
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                        onPressed: () => setState(() => hidePass = !hidePass),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 30),
 
-                    const SizedBox(height: 20),
-
-                    // =======================
-                    // NAVIGATION TO REGISTER
-                    // =======================
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Don't have an account? "),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const RegisterScreen(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _login,
+                      style: _btn(),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "LOGIN",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
                               ),
-                            );
-                          },
-                          child: const Text(
-                            "Create new account",
-                            style: TextStyle(
-                              color: Color(0xFFEF2A39),
-                              fontWeight: FontWeight.bold,
                             ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Don't have an account? "),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
                           ),
                         ),
-                      ],
-                    ),
+                        child: const Text(
+                          "Register",
+                          style: TextStyle(
+                            color: Color(0xFFEF2A39),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 35),
-                  ],
-                ),
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
           ],
@@ -168,43 +124,50 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // =======================
-  // LOGIN LOGIC
-  // =======================
-  void _loginUser() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => isLoading = true);
-
-      await Future.delayed(const Duration(seconds: 1)); // simulate login
-
-      setState(() => isLoading = false);
-
-      // Navigate to home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+  Future<void> _login() async {
+    if (email.text.isEmpty || password.text.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email & password")),
       );
+      return;
     }
-  }
 
-  // =======================
-  // STYLES
-  // =======================
-  InputDecoration _inputStyle(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Color(0xFFEF2A39)),
-        borderRadius: BorderRadius.circular(14),
-      ),
+    setState(() => isLoading = true);
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final message = await userProvider.login(
+      email.text.trim(),
+      password.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+
+    if (message != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
-  ButtonStyle _btnStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFEF2A39),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    );
-  }
+  InputDecoration _field(String label) => InputDecoration(
+    labelText: label,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+    focusedBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFFEF2A39)),
+      borderRadius: BorderRadius.circular(14),
+    ),
+  );
+
+  ButtonStyle _btn() => ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFFEF2A39),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  );
 }

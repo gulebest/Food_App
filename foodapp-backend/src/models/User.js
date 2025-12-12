@@ -1,4 +1,3 @@
-// src/models/User.js
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -10,5 +9,12 @@ const userSchema = new mongoose.Schema({
   address: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
+
+// Hide password in responses
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
 
 module.exports = mongoose.model('User', userSchema);

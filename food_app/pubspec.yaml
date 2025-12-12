@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+
   cupertino_icons: ^1.0.8
   provider: ^6.1.5
   shimmer: ^3.0.0     # <-- Added for shimmer loading effects
