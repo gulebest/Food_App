@@ -4,7 +4,10 @@ const Product = require('../models/Product');
 exports.getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user.id }).populate("items.product");
-    if (!cart) return res.json({ items: [], subtotal: 0 });
+
+    if (!cart)
+      return res.json({ items: [], subtotal: 0 });
+
     res.json(cart);
   } catch (error) {
     console.error("Get Cart Error:", error);
@@ -15,17 +18,37 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const { productId, qty } = req.body;
+
+    if (!qty || qty <= 0)
+      return res.status(400).json({ message: "Quantity must be positive" });
+
     const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
 
     let cart = await Cart.findOne({ user: req.user.id });
-    if (!cart) cart = new Cart({ user: req.user.id, items: [] });
+
+    if (!cart)
+      cart = new Cart({ user: req.user.id, items: [] });
 
     const existing = cart.items.find(i => i.product.toString() === productId);
-    if (existing) existing.qty += qty;
-    else cart.items.push({ product: productId, qty, price: product.price });
 
-    cart.subtotal = cart.items.reduce((sum, i) => sum + i.qty * i.price, 0);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.items.push({
+        product: productId,
+        qty,
+        price: product.price
+      });
+    }
+
+    cart.subtotal = cart.items.reduce(
+      (sum, i) => sum + i.qty * i.price,
+      0
+    );
+
+    cart.updatedAt = Date.now();
 
     await cart.save();
     await cart.populate("items.product");
@@ -40,19 +63,29 @@ exports.addToCart = async (req, res) => {
 exports.updateQty = async (req, res) => {
   try {
     const { productId, qty } = req.body;
+
     const cart = await Cart.findOne({ user: req.user.id });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
     const item = cart.items.find(i => i.product.toString() === productId);
     if (!item) return res.status(404).json({ message: "Item not found" });
 
-    if (qty <= 0) cart.items = cart.items.filter(i => i.product.toString() !== productId);
-    else item.qty = qty;
+    if (qty <= 0) {
+      cart.items = cart.items.filter(i => i.product.toString() !== productId);
+    } else {
+      item.qty = qty;
+    }
 
-    cart.subtotal = cart.items.reduce((sum, i) => sum + i.qty * i.price, 0);
+    cart.subtotal = cart.items.reduce(
+      (sum, i) => sum + i.qty * i.price,
+      0
+    );
+
+    cart.updatedAt = Date.now();
 
     await cart.save();
     await cart.populate("items.product");
+
     res.json(cart);
   } catch (error) {
     console.error("Update Qty Error:", error);
@@ -63,10 +96,14 @@ exports.updateQty = async (req, res) => {
 exports.clearCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user.id });
-    if (!cart) return res.json({ message: "Cart empty" });
+
+    if (!cart)
+      return res.json({ message: "Cart is already empty" });
 
     cart.items = [];
     cart.subtotal = 0;
+    cart.updatedAt = Date.now();
+
     await cart.save();
 
     res.json({ message: "Cart cleared" });
