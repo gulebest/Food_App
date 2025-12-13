@@ -15,10 +15,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<OrderProvider>(
-      context,
-      listen: false,
-    ).fetchOrderById(widget.orderId);
+    Future.microtask(() {
+      Provider.of<OrderProvider>(
+        context,
+        listen: false,
+      ).fetchOrderById(widget.orderId);
+    });
   }
 
   @override
@@ -27,23 +29,69 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final order = provider.selectedOrder;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Order Details")),
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(title: const Text("Order Details"), centerTitle: true),
       body: provider.isLoading || order == null
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 OrderStatusStepper(status: order["status"]),
+
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Items",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Total: \$${order["totalAmount"].toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 Expanded(
                   child: ListView.builder(
                     itemCount: order["items"].length,
                     itemBuilder: (_, i) {
                       final item = order["items"][i];
-                      return ListTile(
-                        title: Text(item["product"]["name"]),
-                        subtitle: Text(
-                          "Qty: ${item["quantity"]} × \$${item["price"]}",
+                      final product = item["product"];
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        trailing: Text("\$${item["quantity"] * item["price"]}"),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            product["name"],
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            "Qty: ${item["quantity"]} × \$${item["price"]}",
+                          ),
+                          trailing: Text(
+                            "\$${(item["quantity"] * item["price"]).toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),

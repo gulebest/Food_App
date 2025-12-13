@@ -30,9 +30,6 @@ class _ProductDetailsState extends State<ProductDetails> {
       body: SafeArea(
         child: Column(
           children: [
-            // ==========================
-            // TOP IMAGE + BUTTONS
-            // ==========================
             Stack(
               children: [
                 Hero(
@@ -44,8 +41,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                     child: Image.asset(product.image, fit: BoxFit.contain),
                   ),
                 ),
-
-                // BACK BUTTON
                 Positioned(
                   top: 15,
                   left: 15,
@@ -54,15 +49,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                     () => Navigator.pop(context),
                   ),
                 ),
-
-                // SEARCH BUTTON
                 Positioned(
                   top: 15,
                   right: 60,
                   child: _circleBtn(Icons.search, () {}),
                 ),
-
-                // FAVORITE BUTTON
                 Positioned(
                   top: 15,
                   right: 15,
@@ -77,14 +68,10 @@ class _ProductDetailsState extends State<ProductDetails> {
               ],
             ),
 
-            // ==========================
-            // CONTENT BODY
-            // ==========================
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                 ),
                 child: SingleChildScrollView(
@@ -92,8 +79,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 15),
-
-                      // PRODUCT NAME
                       Text(
                         product.name,
                         style: const TextStyle(
@@ -101,36 +86,20 @@ class _ProductDetailsState extends State<ProductDetails> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
-                      // ⭐ RATING + TIME
                       Row(
                         children: [
-                          const Icon(
-                            Icons.star,
-                            color: Colors.orange,
-                            size: 22,
-                          ),
+                          const Icon(Icons.star, color: Colors.orange),
                           const SizedBox(width: 4),
-                          Text(
-                            product.rating.toString(),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          Text(product.rating.toString()),
                           const SizedBox(width: 12),
                           const Text(
                             "14 mins",
-                            style: TextStyle(fontSize: 15, color: Colors.grey),
+                            style: TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 20),
-
-                      // LONG DESCRIPTION
                       Text(
                         product.description,
                         style: const TextStyle(
@@ -139,17 +108,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                           color: Colors.black54,
                         ),
                       ),
-
                       const SizedBox(height: 30),
 
-                      // ==========================
-                      // SPICY + PORTION IN SAME ROW
-                      // ==========================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // SPICY SECTION
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,38 +124,19 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: const [
-                                    Text(
-                                      "Mild",
-                                      style: TextStyle(color: Colors.green),
-                                    ),
-                                    Text(
-                                      "Hot",
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ],
-                                ),
                                 Slider(
                                   value: spicyLevel,
                                   min: 1,
                                   max: 3,
                                   divisions: 2,
-                                  activeColor: Color(0xFFEF2A39),
-                                  inactiveColor: Colors.grey.shade300,
-                                  onChanged: (value) {
-                                    setState(() => spicyLevel = value);
-                                  },
+                                  activeColor: const Color(0xFFEF2A39),
+                                  onChanged: (value) =>
+                                      setState(() => spicyLevel = value),
                                 ),
                               ],
                             ),
                           ),
-
                           const SizedBox(width: 20),
-
-                          // PORTION SECTION ON SAME ROW
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -203,7 +147,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 10),
                               Row(
                                 children: [
                                   _qtyButton(Icons.remove, () {
@@ -222,9 +165,10 @@ class _ProductDetailsState extends State<ProductDetails> {
                                       ),
                                     ),
                                   ),
-                                  _qtyButton(Icons.add, () {
-                                    setState(() => quantity++);
-                                  }),
+                                  _qtyButton(
+                                    Icons.add,
+                                    () => setState(() => quantity++),
+                                  ),
                                 ],
                               ),
                             ],
@@ -234,13 +178,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 35),
 
-                      // ==========================
-                      // PRICE + ORDER NOW
-                      // ==========================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // PRICE IN NON-CLICKABLE BUTTON STYLE
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
@@ -260,7 +200,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                             ),
                           ),
 
-                          // ORDER NOW BUTTON
                           SizedBox(
                             height: 55,
                             child: ElevatedButton(
@@ -279,30 +218,31 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   listen: false,
                                 );
 
-                                for (int i = 0; i < quantity; i++) {
-                                  cart.addToCart(
-                                    productId: product.id,
-                                    name: product.name,
-                                    image: product.image,
-                                    price: product.price,
-                                  );
-                                }
+                                cart.addToCart(
+                                  productId: product.id,
+                                  name: product.name,
+                                  image: product.image,
+                                  price: product.price,
+                                  quantity: quantity,
+                                );
 
-                                Navigator.pushNamed(context, "/payment");
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Added to cart"),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+
+                                Navigator.pushNamed(context, "/cart");
                               },
                               child: const Text(
                                 "ORDER NOW",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 30),
                     ],
                   ),
@@ -315,9 +255,6 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
-  // =============================
-  // SMALL ROUND TOP BUTTON
-  // =============================
   Widget _circleBtn(
     IconData icon,
     VoidCallback onTap, {
@@ -328,21 +265,15 @@ class _ProductDetailsState extends State<ProductDetails> {
       child: Container(
         width: 42,
         height: 42,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.15)),
-          ],
         ),
         child: Icon(icon, color: color),
       ),
     );
   }
 
-  // =============================
-  // QTY BUTTON
-  // =============================
   Widget _qtyButton(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -353,7 +284,7 @@ class _ProductDetailsState extends State<ProductDetails> {
           color: const Color(0xFFEF2A39),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, size: 22, color: Colors.white),
+        child: Icon(icon, color: Colors.white),
       ),
     );
   }

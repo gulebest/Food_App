@@ -9,6 +9,8 @@ import 'providers/favorite_provider.dart';
 import 'providers/order_provider.dart';
 
 import 'screens/splash/splash_screen.dart';
+import 'screens/cart/cart_screen.dart';
+import 'screens/payment/payment_screen.dart';
 
 void main() {
   runApp(
@@ -31,9 +33,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      home: const SplashScreen(),
+      routes: {
+        "/cart": (_) => const CartScreen(),
+        "/payment": (_) => const PaymentScreen(),
+      },
     );
   }
 }

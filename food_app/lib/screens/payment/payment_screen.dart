@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/order_provider.dart';
 import '../popup/success_popup.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -11,12 +14,38 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   int selectedCard = 0;
   bool saveCard = true;
+  bool isPaying = false;
 
-  // Controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController cardNumberController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController cvvController = TextEditingController();
+
+  Future<void> _payNow() async {
+    if (isPaying) return;
+
+    setState(() => isPaying = true);
+
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
+    final result = await orderProvider.placeOrder("Default address");
+
+    if (!mounted) return;
+
+    if (result["success"] == true) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SuccessPopup()),
+      );
+      return;
+    }
+
+    setState(() => isPaying = false);
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Payment failed. Try again")));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +99,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 title: "Credit card",
                 number: "5105 **** **** 0505",
               ),
-
               const SizedBox(height: 12),
-
               _paymentCard(
                 index: 1,
                 logo:
@@ -92,66 +119,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
 
-              const SizedBox(height: 20),
-
-              // REAL CREDIT CARD INPUT FIELDS (show only when selected)
-              if (selectedCard == 0 || selectedCard == 1)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Card details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    _inputField(
-                      controller: nameController,
-                      label: "Cardholder Name",
-                      icon: Icons.person,
-                    ),
-                    const SizedBox(height: 12),
-
-                    _inputField(
-                      controller: cardNumberController,
-                      label: "Card Number",
-                      icon: Icons.credit_card,
-                      hint: "xxxx xxxx xxxx xxxx",
-                      keyboard: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _inputField(
-                            controller: expiryController,
-                            label: "Expiry Date",
-                            hint: "MM/YY",
-                            icon: Icons.calendar_today,
-                            keyboard: TextInputType.number,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _inputField(
-                            controller: cvvController,
-                            label: "CVV",
-                            hint: "***",
-                            icon: Icons.lock,
-                            keyboard: TextInputType.number,
-                            obscure: true,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 25),
-                  ],
-                ),
+              const SizedBox(height: 30),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,6 +133,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                   ),
                   ElevatedButton(
+                    onPressed: isPaying ? null : _payNow,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
@@ -175,16 +144,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SuccessPopup()),
-                      );
-                    },
-                    child: const Text(
-                      "Pay Now",
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    child: isPaying
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text("Pay Now", style: TextStyle(fontSize: 16)),
                   ),
                 ],
               ),
@@ -226,7 +195,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String title,
     required String number,
   }) {
-    bool isSelected = selectedCard == index;
+    final isSelected = selectedCard == index;
 
     return InkWell(
       onTap: () => setState(() => selectedCard = index),
@@ -242,12 +211,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               logo,
               width: 40,
               height: 28,
-              fit: BoxFit.contain,
-              errorBuilder: (a, b, c) =>
-                  const Icon(Icons.credit_card, size: 32),
+              errorBuilder: (_, __, ___) => const Icon(Icons.credit_card),
             ),
             const SizedBox(width: 15),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +223,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
                     ),
                   ),
                   Text(
@@ -269,34 +234,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
               color: isSelected ? Colors.white : Colors.black54,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _inputField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? hint,
-    TextInputType keyboard = TextInputType.text,
-    bool obscure = false,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboard,
-      obscureText: obscure,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
