@@ -6,11 +6,9 @@ class CartProvider with ChangeNotifier {
 
   Map<String, CartItem> get items => _items;
 
-  int get itemCount => _items.length;
-
   double get totalAmount {
     double total = 0;
-    _items.forEach((key, item) {
+    _items.forEach((_, item) {
       total += item.price * item.quantity;
     });
     return total;
@@ -21,27 +19,18 @@ class CartProvider with ChangeNotifier {
     required String name,
     required String image,
     required double price,
+    int quantity = 1,
   }) {
     if (_items.containsKey(productId)) {
-      _items[productId]!.quantity++;
+      _items[productId]!.quantity += quantity;
     } else {
       _items[productId] = CartItem(
         productId: productId,
         name: name,
         image: image,
         price: price,
+        quantity: quantity,
       );
-    }
-    notifyListeners();
-  }
-
-  void removeSingleItem(String productId) {
-    if (!_items.containsKey(productId)) return;
-
-    if (_items[productId]!.quantity > 1) {
-      _items[productId]!.quantity--;
-    } else {
-      _items.remove(productId);
     }
     notifyListeners();
   }

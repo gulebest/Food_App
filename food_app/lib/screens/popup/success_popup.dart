@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/cart_provider.dart';
 
 class SuccessPopup extends StatelessWidget {
@@ -7,81 +8,75 @@ class SuccessPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-
-      body: Center(
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(30),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(color: Colors.black12, spreadRadius: 3, blurRadius: 12),
-            ],
-          ),
-
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 32),
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "Success!",
-                style: TextStyle(
-                  color: Colors.redAccent,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "Your payment was successful.\nA receipt has been sent to your email.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.black54),
-              ),
-
-              const SizedBox(height: 25),
-
-              ElevatedButton(
-                onPressed: () {
-                  // CLEAR CART WHEN GOING BACK
-                  Provider.of<CartProvider>(context, listen: false).clearCart();
-
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    "/home",
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade200,
+        body: Center(
+          child: Container(
+            width: 300,
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 12),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 26,
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 40,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                  child: Icon(Icons.check, color: Colors.white, size: 30),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Success!",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.redAccent,
                   ),
                 ),
-                child: const Text(
-                  "Go Back",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                const SizedBox(height: 10),
+                const Text(
+                  "Your order has been placed successfully.",
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
+                const SizedBox(height: 25),
+
+                ElevatedButton(
+                  onPressed: () {
+                    Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    ).clearCart();
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      "/orders",
+                      (_) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 40,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "View My Orders",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

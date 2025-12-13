@@ -28,18 +28,20 @@ class OrderProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> placeOrder(String address) async {
+    if (isLoading) return {"success": false};
+
     isLoading = true;
     notifyListeners();
 
     final result = await ApiService.placeOrder(address);
 
     isLoading = false;
-    notifyListeners();
 
     if (result["success"] == true) {
       await fetchMyOrders();
     }
 
+    notifyListeners();
     return result;
   }
 }

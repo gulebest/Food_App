@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/cart_provider.dart';
 import '../payment/payment_screen.dart';
 
@@ -15,20 +16,16 @@ class CartScreen extends StatelessWidget {
       backgroundColor: Colors.white,
 
       appBar: AppBar(
-        elevation: 0,
         backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
         title: const Text(
           "Your Cart",
-          style: TextStyle(
-            fontSize: 22,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
 
-      body: cart.itemCount == 0
+      body: cartItems.isEmpty
           ? const Center(
               child: Text(
                 "Your cart is empty",
@@ -37,10 +34,10 @@ class CartScreen extends StatelessWidget {
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: cart.itemCount,
+              itemCount: cartItems.length,
               separatorBuilder: (_, __) => const SizedBox(height: 14),
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
+              itemBuilder: (_, i) {
+                final item = cartItems[i];
 
                 return Dismissible(
                   key: ValueKey(item.productId),
@@ -50,202 +47,112 @@ class CartScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 20),
                     decoration: BoxDecoration(
                       color: Colors.red.shade400,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                  onDismissed: (_) {
-                    cart.removeItem(item.productId);
-                  },
+                  onDismissed: (_) => cart.removeItem(item.productId),
 
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9F9),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            item.image,
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        item.image,
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                      ),
 
-                        const SizedBox(width: 12),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "\$${item.price.toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFEF2A39),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            _qtyButton(
-                              icon: Icons.remove,
-                              onPressed: () =>
-                                  cart.removeSingleItem(item.productId),
-                            ),
-
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                item.quantity.toString(),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-
-                            _qtyButton(
-                              icon: Icons.add,
-                              onPressed: () {
+                      Row(
+                        children: [
+                          // ➖ REMOVE (no removeSingleItem)
+                          IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: () {
+                              if (item.quantity > 1) {
                                 cart.addToCart(
                                   productId: item.productId,
                                   name: item.name,
                                   image: item.image,
                                   price: item.price,
+                                  quantity: -1, // 👈 decrement
                                 );
-                              },
+                              } else {
+                                cart.removeItem(item.productId);
+                              }
+                            },
+                          ),
+
+                          Text(
+                            item.quantity.toString(),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+
+                          // ➕ ADD
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              cart.addToCart(
+                                productId: item.productId,
+                                name: item.name,
+                                image: item.image,
+                                price: item.price,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 );
               },
             ),
 
-      bottomNavigationBar: cart.itemCount == 0
+      bottomNavigationBar: cartItems.isEmpty
           ? null
-          : SafeArea(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, -3),
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                height: 54,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF2A39), // 🔴 RED
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Total",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "\$${cart.totalAmount.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFEF2A39),
-                          ),
-                        ),
-                      ],
+                  ),
+                  onPressed: () {
+                    // ✅ JUST NAVIGATE TO PAYMENT
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PaymentScreen()),
+                    );
+                  },
+                  child: const Text(
+                    "Checkout",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PaymentScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF2A39),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Text(
-                          "Checkout",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _qtyButton({required IconData icon, required VoidCallback onPressed}) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFEFEF),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, size: 18),
-        onPressed: onPressed,
-      ),
     );
   }
 }
