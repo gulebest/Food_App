@@ -13,7 +13,9 @@ exports.list = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
     res.json(product);
   } catch (error) {
     console.error("Product GetById Error:", error);

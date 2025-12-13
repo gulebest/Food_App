@@ -1,7 +1,8 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
+// ---------------- REGISTER ----------------
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -17,26 +18,28 @@ exports.register = async (req, res) => {
       name,
       email,
       phone,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id }, // ✅ matches middleware
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(201).json({
       token,
-      user: user.toJSON()
+      user: user.toJSON(),
     });
-
   } catch (err) {
     console.error("Register Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+// ---------------- LOGIN ----------------
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -48,22 +51,30 @@ exports.login = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id }, // ✅ matches middleware
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({ token, user: user.toJSON() });
-
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+// ---------------- ME ----------------
 exports.me = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    res.json(user.toJSON());
+    // ✅ req.user.id now exists
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
   } catch (err) {
     console.error("Me Error:", err);
     res.status(500).json({ message: "Server error" });
