@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/cart_provider.dart';
-import '../payment/payment_screen.dart';
+import '../address/address_selection_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -75,7 +75,6 @@ class CartScreen extends StatelessWidget {
 
                       Row(
                         children: [
-                          // ➖ REMOVE (no removeSingleItem)
                           IconButton(
                             icon: const Icon(Icons.remove),
                             onPressed: () {
@@ -85,7 +84,7 @@ class CartScreen extends StatelessWidget {
                                   name: item.name,
                                   image: item.image,
                                   price: item.price,
-                                  quantity: -1, // 👈 decrement
+                                  quantity: -1,
                                 );
                               } else {
                                 cart.removeItem(item.productId);
@@ -101,7 +100,6 @@ class CartScreen extends StatelessWidget {
                             ),
                           ),
 
-                          // ➕ ADD
                           IconButton(
                             icon: const Icon(Icons.add),
                             onPressed: () {
@@ -130,16 +128,17 @@ class CartScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEF2A39), // 🔴 RED
+                    backgroundColor: const Color(0xFFEF2A39),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   onPressed: () {
-                    // ✅ JUST NAVIGATE TO PAYMENT
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const PaymentScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const AddressSelectionScreen(),
+                      ),
                     );
                   },
                   child: const Text(

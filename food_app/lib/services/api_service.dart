@@ -3,9 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.137.152:5000/api";
+  static const String baseUrl = "http://192.168.137.122:5000/api";
 
+  // ======================
   // TOKEN STORAGE
+  // ======================
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString("token", token);
@@ -21,7 +23,9 @@ class ApiService {
     await prefs.remove("token");
   }
 
+  // ======================
   // HEADERS
+  // ======================
   static Future<Map<String, String>> headers({bool auth = false}) async {
     String? token = await loadToken();
     return {
@@ -30,7 +34,7 @@ class ApiService {
     };
   }
 
-  static Map<String, dynamic> _safeDecode(String body) {
+  static dynamic _safeDecode(String body) {
     try {
       return jsonDecode(body);
     } catch (_) {
@@ -38,9 +42,10 @@ class ApiService {
     }
   }
 
-  //---------------------------
-  // REGISTER
-  //---------------------------
+  // =====================================================
+  // AUTH
+  // =====================================================
+
   static Future<Map<String, dynamic>> register(
     String name,
     String email,
@@ -71,9 +76,6 @@ class ApiService {
     }
   }
 
-  //---------------------------
-  // LOGIN
-  //---------------------------
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -97,9 +99,6 @@ class ApiService {
     }
   }
 
-  //---------------------------
-  // GET PROFILE
-  //---------------------------
   static Future<Map<String, dynamic>?> getProfile() async {
     try {
       final res = await http.get(
@@ -116,9 +115,6 @@ class ApiService {
     }
   }
 
-  //---------------------------
-  // UPDATE PROFILE
-  //---------------------------
   static Future<Map<String, dynamic>?> updateProfile({
     required String name,
     required String email,
@@ -147,10 +143,72 @@ class ApiService {
   }
 
   // =====================================================
+  // ADDRESSES ✅ NEW
+  // =====================================================
+
+  static Future<List<dynamic>> getAddresses() async {
+    try {
+      final res = await http.get(
+        Uri.parse("$baseUrl/addresses"),
+        headers: await headers(auth: true),
+      );
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>?> addAddress(
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/addresses"),
+        headers: await headers(auth: true),
+        body: jsonEncode(payload),
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return jsonDecode(res.body);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ============================
+  // STRIPE PAYMENT
+  // ============================
+  static Future<String?> createPaymentIntent(int amount) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/payments/create-intent"),
+        headers: await headers(auth: true),
+        body: jsonEncode({"amount": amount}),
+      );
+
+      final body = jsonDecode(res.body);
+
+      if (res.statusCode == 200) {
+        return body["clientSecret"];
+      }
+
+      return null;
+    } catch (e) {
+      print("PaymentIntent error: $e");
+      return null;
+    }
+  }
+
+  // =====================================================
   // ORDERS
   // =====================================================
 
-  // PLACE ORDER
   static Future<Map<String, dynamic>> placeOrder(String deliveryAddress) async {
     try {
       final res = await http.post(
@@ -171,7 +229,6 @@ class ApiService {
     }
   }
 
-  // GET MY ORDERS
   static Future<List<dynamic>> getMyOrders() async {
     try {
       final res = await http.get(
@@ -188,7 +245,6 @@ class ApiService {
     }
   }
 
-  // GET ORDER BY ID
   static Future<Map<String, dynamic>?> getOrderById(String id) async {
     try {
       final res = await http.get(
