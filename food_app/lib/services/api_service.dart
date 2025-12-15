@@ -118,6 +118,7 @@ class ApiService {
       if (res.statusCode == 200) {
         return _safeDecode(res.body);
       }
+
       return null;
     } catch (_) {
       return null;
@@ -216,7 +217,7 @@ class ApiService {
   }
 
   // =====================================================
-  // ORDERS
+  // ORDERS (FIXED)
   // =====================================================
 
   static Future<Map<String, dynamic>> placeOrder({
@@ -242,29 +243,29 @@ class ApiService {
       }
 
       return {"success": false, "message": body["message"]};
-    } catch (e) {
+    } catch (_) {
       return {"success": false, "message": "Network error"};
     }
   }
 
-  // ✅ ADDED — REQUIRED BY OrderProvider
+  /// ✅ SINGLE, CORRECT METHOD
   static Future<List<dynamic>> getMyOrders() async {
     try {
       final res = await http.get(
-        Uri.parse("$baseUrl/orders"),
+        Uri.parse("$baseUrl/orders/my"),
         headers: await headers(auth: true),
       );
 
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
       }
+
       return [];
     } catch (_) {
       return [];
     }
   }
 
-  // ✅ ADDED — REQUIRED BY OrderProvider
   static Future<Map<String, dynamic>?> getOrderById(String id) async {
     try {
       final res = await http.get(
@@ -275,8 +276,10 @@ class ApiService {
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
       }
+
       return null;
-    } catch (_) {
+    } catch (e) {
+      print("❌ Get order by ID error: $e");
       return null;
     }
   }
@@ -284,6 +287,7 @@ class ApiService {
   // =============================
   // PRODUCTS
   // =============================
+
   static Future<List<dynamic>> getProducts() async {
     try {
       final res = await http.get(
@@ -294,11 +298,7 @@ class ApiService {
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
 
-        // ✅ HANDLE BOTH API SHAPES
-        if (decoded is List) {
-          return decoded;
-        }
-
+        if (decoded is List) return decoded;
         if (decoded is Map && decoded.containsKey("products")) {
           return decoded["products"];
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/cart_provider.dart';
+import '../../providers/order_provider.dart';
 import '../orders/my_orders_screen.dart';
 
 class SuccessPopup extends StatelessWidget {
@@ -12,7 +13,7 @@ class SuccessPopup extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.4),
+        backgroundColor: Colors.transparent,
         body: Center(
           child: Container(
             width: 320,
@@ -48,15 +49,19 @@ class SuccessPopup extends StatelessWidget {
                   style: TextStyle(fontSize: 15, color: Colors.black54),
                 ),
                 const SizedBox(height: 26),
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Provider.of<CartProvider>(
                         context,
                         listen: false,
                       ).clearCart();
+
+                      await Provider.of<OrderProvider>(
+                        context,
+                        listen: false,
+                      ).fetchMyOrders(force: true);
 
                       Navigator.pushAndRemoveUntil(
                         context,

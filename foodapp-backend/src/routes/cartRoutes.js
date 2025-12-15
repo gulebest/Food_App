@@ -1,11 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const auth = require('../middleware/auth');
-const cartController = require('../controllers/cartController');
+const auth = require("../middleware/auth");
+const {
+  placeOrder,
+  getMyOrders,
+  getOrderById,
+} = require("../controllers/orderController");
 
-router.get('/', auth, cartController.getCart);
-router.post('/add', auth, cartController.addToCart);
-router.put('/update', auth, cartController.updateQty);
-router.delete('/clear', auth, cartController.clearCart);
+// IMPORTANT: order matters
+router.post("/place", auth, placeOrder);
+
+// 🔥 THIS IS WHAT FLUTTER CALLS
+router.get("/", auth, getMyOrders); // ✅ FIXED PATH
+
+router.get("/:id", auth, getOrderById);
 
 module.exports = router;

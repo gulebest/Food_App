@@ -15,8 +15,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      Provider.of<OrderProvider>(context, listen: false).fetchMyOrders();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrderProvider>(
+        context,
+        listen: false,
+      ).fetchMyOrders(force: true);
     });
   }
 

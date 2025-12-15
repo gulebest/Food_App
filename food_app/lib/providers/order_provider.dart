@@ -7,6 +7,9 @@ class OrderProvider with ChangeNotifier {
   List<dynamic> myOrders = [];
   Map<String, dynamic>? selectedOrder;
 
+  // ===============================
+  // PLACE ORDER
+  // ===============================
   Future<Map<String, dynamic>> placeOrder({
     required String address,
     required List<Map<String, dynamic>> items,
@@ -26,14 +29,19 @@ class OrderProvider with ChangeNotifier {
     isLoading = false;
 
     if (result["success"] == true) {
-      await fetchMyOrders();
+      await fetchMyOrders(force: true);
     }
 
     notifyListeners();
     return result;
   }
 
-  Future<void> fetchMyOrders() async {
+  // ===============================
+  // FETCH MY ORDERS
+  // ===============================
+  Future<void> fetchMyOrders({bool force = false}) async {
+    if (isLoading && !force) return;
+
     isLoading = true;
     notifyListeners();
 
@@ -47,12 +55,16 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ===============================
+  // FETCH ORDER BY ID
+  // ===============================
   Future<void> fetchOrderById(String id) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      selectedOrder = await ApiService.getOrderById(id);
+      final order = await ApiService.getOrderById(id);
+      selectedOrder = order;
     } catch (_) {
       selectedOrder = null;
     }

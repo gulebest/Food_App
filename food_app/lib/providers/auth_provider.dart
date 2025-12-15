@@ -8,24 +8,30 @@ class AuthProvider with ChangeNotifier {
   String? token;
   Map<String, dynamic>? user;
   bool isLoading = false;
+  bool isInitialized = false; // ✅ NEW
 
   // -------------------------
   // AUTO LOGIN (LOAD TOKEN)
   // -------------------------
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString("token");
 
+    token = prefs.getString("token");
+    final savedUser = prefs.getString("user");
+
+    if (token != null && savedUser != null) {
+      user = jsonDecode(savedUser);
+    }
+
+    // Validate token with backend
     if (token != null) {
       final profile = await ApiService.getProfile();
-
-      if (profile != null) {
-        user = profile;
-      } else {
+      if (profile == null) {
         await logout();
       }
     }
 
+    isInitialized = true;
     notifyListeners();
   }
 
@@ -57,12 +63,12 @@ class AuthProvider with ChangeNotifier {
 
       final res = await ApiService.register(name, email, phone, password);
 
-      if (res != null && res["token"] != null) {
+      if (res["success"] == true && res["token"] != null) {
         await _saveAuth(res["token"], res["user"]);
         return null;
       }
 
-      return res?["message"] ?? "Registration failed";
+      return res["message"] ?? "Registration failed";
     } catch (e) {
       return "Error: $e";
     } finally {
@@ -81,12 +87,12 @@ class AuthProvider with ChangeNotifier {
 
       final res = await ApiService.login(email, password);
 
-      if (res != null && res["token"] != null) {
+      if (res["success"] == true && res["token"] != null) {
         await _saveAuth(res["token"], res["user"]);
         return null;
       }
 
-      return res?["message"] ?? "Invalid login";
+      return res["message"] ?? "Invalid login";
     } catch (e) {
       return "Error: $e";
     } finally {

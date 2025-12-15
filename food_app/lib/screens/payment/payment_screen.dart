@@ -32,7 +32,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     final cart = Provider.of<CartProvider>(context, listen: false);
 
-    // ❌ Empty cart guard
     if (cart.items.isEmpty) {
       setState(() => isPaying = false);
       ScaffoldMessenger.of(
@@ -41,33 +40,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    // 🔍 Validate MongoDB ObjectIds BEFORE payment
+    // 🔒 Validate Mongo ObjectIds
     for (final item in cart.items.values) {
-      debugPrint("🧾 ORDER PRODUCT ID: ${item.productId}");
-
       if (!_isValidMongoId(item.productId)) {
         setState(() => isPaying = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Invalid product detected. Please refresh products."),
+            content: Text("Invalid product detected. Refresh products."),
           ),
         );
         return;
       }
     }
 
-    // 💳 Stripe payment (amount in cents)
+    // 💳 Stripe payment (amount locked)
     final paid = await StripeService.pay((cart.totalAmount * 100).toInt());
 
     if (!paid) {
       setState(() => isPaying = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Payment cancelled or failed")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Payment cancelled")));
       return;
     }
 
-    // 📦 Build delivery address
+    // 📦 Delivery address snapshot
     final deliveryAddress =
         "${widget.selectedAddress.fullName}\n"
         "${widget.selectedAddress.street}\n"
@@ -76,7 +73,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
-    // ✅ Use SINGLE trusted source (already Mongo-safe)
     final result = await orderProvider.placeOrder(
       address: deliveryAddress,
       items: cart.itemsForOrder,
@@ -145,7 +141,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       "${address.street}, ${address.city}\n"
                       "${address.country}\n"
                       "${address.phone}",
-                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                   TextButton(

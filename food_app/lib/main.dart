@@ -21,7 +21,6 @@ import 'screens/address/address_selection_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔐 Stripe publishable key
   Stripe.publishableKey =
       "pk_test_51SNId5JWhKSIeDPOAQCM5t65dcTeArpbOIjWh9BQIVpOnxD0yv3dCpDxuwpdE71UsXZQ2A1omy5X9MPINh5kOyqB00EthvbXJM";
 
@@ -30,9 +29,11 @@ Future<void> main() async {
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,
-      builder: (context) => MultiProvider(
+      builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(
+            create: (_) => AuthProvider()..loadToken(),
+          ), // ✅
           ChangeNotifierProvider(create: (_) => UserProvider()),
           ChangeNotifierProvider(create: (_) => ProductProvider()),
           ChangeNotifierProvider(create: (_) => CartProvider()),
@@ -51,16 +52,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (!auth.isInitialized) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
     return MaterialApp(
-      useInheritedMediaQuery: true, // required for DevicePreview
+      useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
-
       debugShowCheckedModeBanner: false,
       title: 'Food App',
-
       home: const SplashScreen(),
-
       routes: {
         '/cart': (_) => const CartScreen(),
         '/address': (_) => const AddressSelectionScreen(),
