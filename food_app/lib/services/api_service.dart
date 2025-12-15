@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = "http://10.232.72.161:5000/api";
+  static const String baseUrl = "http://192.168.137.122:5000/api";
 
   // ======================
   // TOKEN STORAGE
@@ -217,7 +217,7 @@ class ApiService {
   }
 
   // =====================================================
-  // ORDERS (FIXED)
+  // ORDERS
   // =====================================================
 
   static Future<Map<String, dynamic>> placeOrder({
@@ -248,7 +248,6 @@ class ApiService {
     }
   }
 
-  /// ✅ SINGLE, CORRECT METHOD
   static Future<List<dynamic>> getMyOrders() async {
     try {
       final res = await http.get(
@@ -266,6 +265,7 @@ class ApiService {
     }
   }
 
+  // 🔥 FIXED: sanitize numeric values
   static Future<Map<String, dynamic>?> getOrderById(String id) async {
     try {
       final res = await http.get(
@@ -274,7 +274,19 @@ class ApiService {
       );
 
       if (res.statusCode == 200) {
-        return jsonDecode(res.body);
+        final order = jsonDecode(res.body);
+
+        order["totalAmount"] =
+            (order["totalAmount"] as num?)?.toDouble() ?? 0.0;
+
+        if (order["items"] is List) {
+          for (final item in order["items"]) {
+            item["quantity"] = (item["quantity"] as num?)?.toInt() ?? 1;
+            item["price"] = (item["price"] as num?)?.toDouble() ?? 0.0;
+          }
+        }
+
+        return order;
       }
 
       return null;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
@@ -6,6 +7,11 @@ class OrderProvider with ChangeNotifier {
 
   List<dynamic> myOrders = [];
   Map<String, dynamic>? selectedOrder;
+
+  Timer? _ordersPollingTimer;
+  Timer? _orderDetailsPollingTimer;
+
+  String? _lastOrderStatus;
 
   // ===============================
   // PLACE ORDER
@@ -55,21 +61,76 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshMyOrders() async {
+    await fetchMyOrders(force: true);
+  }
+
   // ===============================
-  // FETCH ORDER BY ID
+  // ORDERS LIST LIVE POLLING
+  // ===============================
+  void startPolling() {
+    _ordersPollingTimer?.cancel();
+
+    _ordersPollingTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => fetchMyOrders(force: true),
+    );
+  }
+
+  void stopPolling() {
+    _ordersPollingTimer?.cancel();
+    _ordersPollingTimer = null;
+  }
+
+  // ===============================
+  // FETCH ORDER BY ID (FINAL FIX)
   // ===============================
   Future<void> fetchOrderById(String id) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      final order = await ApiService.getOrderById(id);
-      selectedOrder = order;
+      final Map<String, dynamic>? apiOrder = await ApiService.getOrderById(id);
+
+      if (apiOrder == null) {
+        selectedOrder = null;
+      } else {
+        final order = Map<String, dynamic>.from(apiOrder);
+
+        final newStatus = order["status"];
+        final statusChanged =
+            _lastOrderStatus != null && _lastOrderStatus != newStatus;
+
+        _lastOrderStatus = newStatus;
+
+        selectedOrder = {...order, "_statusChanged": statusChanged};
+
+        if (newStatus == "delivered") {
+          stopOrderPolling();
+        }
+      }
     } catch (_) {
       selectedOrder = null;
     }
 
     isLoading = false;
     notifyListeners();
+  }
+
+  // ===============================
+  // ORDER DETAILS LIVE POLLING
+  // ===============================
+  void startOrderPolling(String orderId) {
+    _orderDetailsPollingTimer?.cancel();
+
+    _orderDetailsPollingTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => fetchOrderById(orderId),
+    );
+  }
+
+  void stopOrderPolling() {
+    _orderDetailsPollingTimer?.cancel();
+    _orderDetailsPollingTimer = null;
   }
 }

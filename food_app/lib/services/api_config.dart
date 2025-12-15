@@ -12,7 +12,7 @@ class ApiConfig {
       return "http://localhost:5000/api";
     } else {
       // REAL DEVICE → MUST use your laptop WiFi IP
-      return "http://10.232.72.161:5000/api"; // ✅ your confirmed working IP
+      return "http://192.168.137.122:5000/api"; // ✅ your confirmed working IP
     }
   }
 

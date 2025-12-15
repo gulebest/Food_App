@@ -13,21 +13,55 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  String? _previousStatus; // ✅ A2 STEP 3
+
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
-      Provider.of<OrderProvider>(
-        context,
-        listen: false,
-      ).fetchOrderById(widget.orderId);
+      final provider = Provider.of<OrderProvider>(context, listen: false);
+
+      provider.fetchOrderById(widget.orderId);
+      provider.startOrderPolling(widget.orderId);
     });
+  }
+
+  @override
+  void dispose() {
+    Provider.of<OrderProvider>(context, listen: false).stopOrderPolling();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<OrderProvider>(context);
     final order = provider.selectedOrder;
+
+    if (order != null) {
+      final currentStatus = order["status"];
+      final statusChanged = order["_statusChanged"] == true;
+
+      if (statusChanged && currentStatus != _previousStatus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                currentStatus == "delivered"
+                    ? "🎉 Order delivered successfully!"
+                    : "Order status updated to \"$currentStatus\"",
+              ),
+              backgroundColor: currentStatus == "delivered"
+                  ? Colors.green
+                  : Colors.blue,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        });
+
+        _previousStatus = currentStatus;
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -36,7 +70,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                OrderStatusStepper(status: order["status"]),
+                OrderStatusStepper(status: order["status"] ?? "pending"),
 
                 Padding(
                   padding: const EdgeInsets.all(14),
@@ -51,7 +85,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         ),
                       ),
                       Text(
-                        "\$${(order["totalAmount"] as num).toStringAsFixed(2)}",
+                        "\$${((order["totalAmount"] ?? 0) as num).toStringAsFixed(2)}",
                         style: const TextStyle(
                           fontSize: 18,
                           color: Color(0xFFEF2A39),
@@ -64,11 +98,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
                 Expanded(
                   child: ListView.builder(
-                    itemCount: order["items"].length,
+                    itemCount: (order["items"] as List).length,
                     itemBuilder: (_, i) {
-                      final item = order["items"][i];
-                      final product = item["product"];
-                      final qty = item["quantity"] ?? 1;
+                      final item = order["items"][i] as Map<String, dynamic>;
+                      final product = item["product"] as Map<String, dynamic>?;
+
+                      final qty = (item["quantity"] ?? 1) as num;
+                      final price = (item["price"] ?? 0) as num;
+                      final name = product?["name"] ?? "Item";
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
@@ -80,12 +117,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         ),
                         child: ListTile(
                           title: Text(
-                            product["name"],
+                            name,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text("Qty: $qty × \$${item["price"]}"),
+                          subtitle: Text(
+                            "Qty: $qty × \$${price.toStringAsFixed(2)}",
+                          ),
                           trailing: Text(
-                            "\$${(qty * item["price"]).toStringAsFixed(2)}",
+                            "\$${(qty * price).toStringAsFixed(2)}",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Color(0xFFEF2A39),

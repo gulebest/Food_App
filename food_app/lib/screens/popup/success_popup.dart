@@ -11,9 +11,22 @@ class SuccessPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
+      onWillPop: () async {
+        Navigator.pop(context); // 👈 Android back works
+        return false;
+      },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.grey.shade100, // ✅ white/light theme
+        appBar: AppBar(
+          title: const Text("Success"),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context); // 👈 back arrow
+            },
+          ),
+        ),
         body: Center(
           child: Container(
             width: 320,
