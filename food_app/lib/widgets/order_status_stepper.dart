@@ -6,13 +6,13 @@ class OrderStatusStepper extends StatelessWidget {
 
   int get step {
     switch (status) {
-      case "Pending":
+      case "pending":
         return 0;
-      case "Processing":
+      case "preparing":
         return 1;
-      case "Shipped":
+      case "on_the_way":
         return 2;
-      case "Delivered":
+      case "delivered":
         return 3;
       default:
         return 0;
@@ -26,8 +26,8 @@ class OrderStatusStepper extends StatelessWidget {
       controlsBuilder: (_, __) => const SizedBox(),
       steps: const [
         Step(title: Text("Pending"), content: SizedBox()),
-        Step(title: Text("Processing"), content: SizedBox()),
-        Step(title: Text("Shipped"), content: SizedBox()),
+        Step(title: Text("Preparing"), content: SizedBox()),
+        Step(title: Text("On the way"), content: SizedBox()),
         Step(title: Text("Delivered"), content: SizedBox()),
       ],
     );

@@ -7,33 +7,21 @@ class OrderProvider with ChangeNotifier {
   List<dynamic> myOrders = [];
   Map<String, dynamic>? selectedOrder;
 
-  Future<void> fetchMyOrders() async {
-    isLoading = true;
-    notifyListeners();
-
-    myOrders = await ApiService.getMyOrders();
-
-    isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> fetchOrderById(String id) async {
-    isLoading = true;
-    notifyListeners();
-
-    selectedOrder = await ApiService.getOrderById(id);
-
-    isLoading = false;
-    notifyListeners();
-  }
-
-  Future<Map<String, dynamic>> placeOrder(String address) async {
+  Future<Map<String, dynamic>> placeOrder({
+    required String address,
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+  }) async {
     if (isLoading) return {"success": false};
 
     isLoading = true;
     notifyListeners();
 
-    final result = await ApiService.placeOrder(address);
+    final result = await ApiService.placeOrder(
+      address: address,
+      items: items,
+      totalAmount: totalAmount,
+    );
 
     isLoading = false;
 
@@ -43,5 +31,33 @@ class OrderProvider with ChangeNotifier {
 
     notifyListeners();
     return result;
+  }
+
+  Future<void> fetchMyOrders() async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      myOrders = await ApiService.getMyOrders();
+    } catch (_) {
+      myOrders = [];
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchOrderById(String id) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      selectedOrder = await ApiService.getOrderById(id);
+    } catch (_) {
+      selectedOrder = null;
+    }
+
+    isLoading = false;
+    notifyListeners();
   }
 }

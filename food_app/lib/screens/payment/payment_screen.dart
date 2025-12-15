@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/address_model.dart';
 import '../../providers/order_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../services/stripe_service.dart';
 import '../popup/success_popup.dart';
 import '../address/address_selection_screen.dart';
@@ -19,16 +20,44 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   bool isPaying = false;
 
+  bool _isValidMongoId(String id) {
+    final regex = RegExp(r'^[a-fA-F0-9]{24}$');
+    return regex.hasMatch(id);
+  }
+
   Future<void> _payNow() async {
     if (isPaying) return;
 
     setState(() => isPaying = true);
-    print("🟡 Pay Now button pressed");
 
-    // 💳 Stripe payment ($18.19 → 1819 cents)
-    final paid = await StripeService.pay(1819);
+    final cart = Provider.of<CartProvider>(context, listen: false);
 
-    print("🟡 Stripe payment result: $paid");
+    // ❌ Empty cart guard
+    if (cart.items.isEmpty) {
+      setState(() => isPaying = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Cart is empty")));
+      return;
+    }
+
+    // 🔍 Validate MongoDB ObjectIds BEFORE payment
+    for (final item in cart.items.values) {
+      debugPrint("🧾 ORDER PRODUCT ID: ${item.productId}");
+
+      if (!_isValidMongoId(item.productId)) {
+        setState(() => isPaying = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Invalid product detected. Please refresh products."),
+          ),
+        );
+        return;
+      }
+    }
+
+    // 💳 Stripe payment (amount in cents)
+    final paid = await StripeService.pay((cart.totalAmount * 100).toInt());
 
     if (!paid) {
       setState(() => isPaying = false);
@@ -38,26 +67,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    print("🟢 Payment successful, placing order");
-
-    // 📦 Place order
-    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-
+    // 📦 Build delivery address
     final deliveryAddress =
         "${widget.selectedAddress.fullName}\n"
         "${widget.selectedAddress.street}\n"
         "${widget.selectedAddress.city}, ${widget.selectedAddress.country}\n"
         "${widget.selectedAddress.phone}";
 
-    final result = await orderProvider.placeOrder(deliveryAddress);
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
-    print("🟢 Order response: $result");
+    // ✅ Use SINGLE trusted source (already Mongo-safe)
+    final result = await orderProvider.placeOrder(
+      address: deliveryAddress,
+      items: cart.itemsForOrder,
+      totalAmount: cart.totalAmount,
+    );
 
     if (!mounted) return;
 
     if (result["success"] == true) {
-      print("✅ Order placed successfully, navigating to success screen");
-
+      cart.clearCart();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const SuccessPopup()),
@@ -65,10 +94,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    print("❌ Order failed");
-
     setState(() => isPaying = false);
-
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text("Order failed after payment")));
@@ -77,6 +103,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final address = widget.selectedAddress;
+    final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -102,7 +129,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -136,15 +162,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-
             const Spacer(),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "\$18.19",
-                  style: TextStyle(
+                Text(
+                  "\$${cart.totalAmount.toStringAsFixed(2)}",
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.red,

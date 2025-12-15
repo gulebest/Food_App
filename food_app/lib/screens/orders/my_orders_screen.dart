@@ -47,25 +47,32 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           : provider.myOrders.isEmpty
           ? const Center(child: Text("No orders yet"))
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               itemCount: provider.myOrders.length,
               itemBuilder: (_, i) {
                 final order = provider.myOrders[i];
                 final id = order["_id"].toString().substring(0, 8);
 
                 return Card(
+                  elevation: 3,
+                  margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: ListTile(
-                    title: Text("Order #$id"),
+                    title: Text(
+                      "Order #$id",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
-                      "Total: \$${order["totalAmount"].toStringAsFixed(2)}",
+                      "Total: \$${(order["totalAmount"] as num).toStringAsFixed(2)}",
                     ),
                     trailing: Chip(
-                      backgroundColor: _statusColor(order["status"]),
+                      backgroundColor: _statusColor(
+                        order["status"] ?? "pending",
+                      ),
                       label: Text(
-                        order["status"],
+                        order["status"] ?? "pending",
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),

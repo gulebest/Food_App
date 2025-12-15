@@ -20,16 +20,28 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
-    final product = productProvider.findById(widget.productId);
-    bool isFav = productProvider.isFavorite(product.id);
 
-    double totalPrice = product.price * quantity;
+    // 🔥 WAIT UNTIL PRODUCTS ARE LOADED
+    if (productProvider.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final product = productProvider.findById(widget.productId);
+
+    // ✅ SAFETY CHECK (REQUIRED)
+    if (product == null) {
+      return const Scaffold(body: Center(child: Text("Product not found")));
+    }
+
+    final isFav = productProvider.isFavorite(product.id);
+    final totalPrice = product.price * quantity;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // ================= IMAGE + ACTIONS =================
             Stack(
               children: [
                 Hero(
@@ -38,9 +50,18 @@ class _ProductDetailsState extends State<ProductDetails> {
                     height: 320,
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
-                    child: Image.asset(product.image, fit: BoxFit.contain),
+                    child: Image.network(
+                      product.image, // ✅ FROM MONGODB URL
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.fastfood,
+                        size: 120,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                 ),
+
                 Positioned(
                   top: 15,
                   left: 15,
@@ -49,25 +70,20 @@ class _ProductDetailsState extends State<ProductDetails> {
                     () => Navigator.pop(context),
                   ),
                 ),
-                Positioned(
-                  top: 15,
-                  right: 60,
-                  child: _circleBtn(Icons.search, () {}),
-                ),
+
                 Positioned(
                   top: 15,
                   right: 15,
                   child: _circleBtn(
                     isFav ? Icons.favorite : Icons.favorite_border,
-                    () {
-                      productProvider.toggleFavorite(product.id);
-                    },
+                    () => productProvider.toggleFavorite(product.id),
                     color: Colors.red,
                   ),
                 ),
               ],
             ),
 
+            // ================= DETAILS =================
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -79,6 +95,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 15),
+
                       Text(
                         product.name,
                         style: const TextStyle(
@@ -86,12 +103,14 @@ class _ProductDetailsState extends State<ProductDetails> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 10),
+
                       Row(
                         children: [
                           const Icon(Icons.star, color: Colors.orange),
                           const SizedBox(width: 4),
-                          Text(product.rating.toString()),
+                          Text(product.rating.toStringAsFixed(1)),
                           const SizedBox(width: 12),
                           const Text(
                             "14 mins",
@@ -99,7 +118,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 20),
+
                       Text(
                         product.description,
                         style: const TextStyle(
@@ -108,8 +129,10 @@ class _ProductDetailsState extends State<ProductDetails> {
                           color: Colors.black54,
                         ),
                       ),
+
                       const SizedBox(height: 30),
 
+                      // ================= SPICY + QUANTITY =================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -130,13 +153,15 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   max: 3,
                                   divisions: 2,
                                   activeColor: const Color(0xFFEF2A39),
-                                  onChanged: (value) =>
-                                      setState(() => spicyLevel = value),
+                                  onChanged: (v) =>
+                                      setState(() => spicyLevel = v),
                                 ),
                               ],
                             ),
                           ),
+
                           const SizedBox(width: 20),
+
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -178,6 +203,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                       const SizedBox(height: 35),
 
+                      // ================= PRICE + CART =================
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -243,6 +269,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 30),
                     ],
                   ),
@@ -255,6 +282,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
+  // ================= UI HELPERS =================
   Widget _circleBtn(
     IconData icon,
     VoidCallback onTap, {

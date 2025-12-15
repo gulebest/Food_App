@@ -3,11 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.137.122:5000/api";
+  static const String baseUrl = "http://10.232.72.161:5000/api";
 
   // ======================
   // TOKEN STORAGE
   // ======================
+
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString("token", token);
@@ -26,11 +27,19 @@ class ApiService {
   // ======================
   // HEADERS
   // ======================
+
   static Future<Map<String, String>> headers({bool auth = false}) async {
-    String? token = await loadToken();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+
+    if (auth && (token == null || token.isEmpty)) {
+      print("❌ AUTH TOKEN MISSING");
+    }
+
     return {
       "Content-Type": "application/json",
-      if (auth && token != null) "Authorization": "Bearer $token",
+      if (auth && token != null && token.isNotEmpty)
+        "Authorization": "Bearer $token",
     };
   }
 
@@ -143,7 +152,7 @@ class ApiService {
   }
 
   // =====================================================
-  // ADDRESSES ✅ NEW
+  // ADDRESSES
   // =====================================================
 
   static Future<List<dynamic>> getAddresses() async {
@@ -184,6 +193,7 @@ class ApiService {
   // ============================
   // STRIPE PAYMENT
   // ============================
+
   static Future<String?> createPaymentIntent(int amount) async {
     try {
       final res = await http.post(
@@ -209,12 +219,20 @@ class ApiService {
   // ORDERS
   // =====================================================
 
-  static Future<Map<String, dynamic>> placeOrder(String deliveryAddress) async {
+  static Future<Map<String, dynamic>> placeOrder({
+    required String address,
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+  }) async {
     try {
       final res = await http.post(
         Uri.parse("$baseUrl/orders/place"),
         headers: await headers(auth: true),
-        body: jsonEncode({"deliveryAddress": deliveryAddress}),
+        body: jsonEncode({
+          "deliveryAddress": address,
+          "items": items,
+          "totalAmount": totalAmount,
+        }),
       );
 
       final body = _safeDecode(res.body);
@@ -225,10 +243,11 @@ class ApiService {
 
       return {"success": false, "message": body["message"]};
     } catch (e) {
-      return {"success": false, "message": "Network error: $e"};
+      return {"success": false, "message": "Network error"};
     }
   }
 
+  // ✅ ADDED — REQUIRED BY OrderProvider
   static Future<List<dynamic>> getMyOrders() async {
     try {
       final res = await http.get(
@@ -245,6 +264,7 @@ class ApiService {
     }
   }
 
+  // ✅ ADDED — REQUIRED BY OrderProvider
   static Future<Map<String, dynamic>?> getOrderById(String id) async {
     try {
       final res = await http.get(
@@ -258,6 +278,36 @@ class ApiService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  // =============================
+  // PRODUCTS
+  // =============================
+  static Future<List<dynamic>> getProducts() async {
+    try {
+      final res = await http.get(
+        Uri.parse("$baseUrl/products"),
+        headers: await headers(),
+      );
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+
+        // ✅ HANDLE BOTH API SHAPES
+        if (decoded is List) {
+          return decoded;
+        }
+
+        if (decoded is Map && decoded.containsKey("products")) {
+          return decoded["products"];
+        }
+      }
+
+      return [];
+    } catch (e) {
+      print("❌ Get products error: $e");
+      return [];
     }
   }
 }

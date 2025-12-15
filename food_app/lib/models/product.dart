@@ -6,7 +6,7 @@ class Product {
   final double price;
   final double rating;
   final String calories;
-  final String category; // ⭐ NEW FIELD
+  final String category;
 
   Product({
     required this.id,
@@ -18,4 +18,17 @@ class Product {
     required this.calories,
     required this.category,
   });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['_id'].toString(), // ✅ MongoDB ObjectId
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      image: json['image'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 4.0,
+      calories: json['calories'] ?? '',
+      category: json['category'] ?? 'Classics',
+    );
+  }
 }

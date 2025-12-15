@@ -6,11 +6,22 @@ class CartProvider with ChangeNotifier {
 
   Map<String, CartItem> get items => _items;
 
+  /// Used when sending order to backend
+  List<Map<String, dynamic>> get itemsForOrder {
+    return _items.values.map((item) {
+      return {
+        "product": item.productId, // ✅ MongoDB ObjectId
+        "quantity": item.quantity,
+        "price": item.price,
+      };
+    }).toList();
+  }
+
   double get totalAmount {
     double total = 0;
-    _items.forEach((_, item) {
+    for (final item in _items.values) {
       total += item.price * item.quantity;
-    });
+    }
     return total;
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/order_provider.dart';
 import '../../widgets/order_status_stepper.dart';
 
@@ -38,7 +39,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 OrderStatusStepper(status: order["status"]),
 
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -50,10 +51,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         ),
                       ),
                       Text(
-                        "Total: \$${order["totalAmount"].toStringAsFixed(2)}",
+                        "\$${(order["totalAmount"] as num).toStringAsFixed(2)}",
                         style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.redAccent,
+                          fontSize: 18,
+                          color: Color(0xFFEF2A39),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -67,28 +68,27 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     itemBuilder: (_, i) {
                       final item = order["items"][i];
                       final product = item["product"];
+                      final qty = item["quantity"] ?? 1;
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 14,
                           vertical: 6,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: ListTile(
                           title: Text(
                             product["name"],
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text(
-                            "Qty: ${item["quantity"]} × \$${item["price"]}",
-                          ),
+                          subtitle: Text("Qty: $qty × \$${item["price"]}"),
                           trailing: Text(
-                            "\$${(item["quantity"] * item["price"]).toStringAsFixed(2)}",
+                            "\$${(qty * item["price"]).toStringAsFixed(2)}",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.redAccent,
+                              color: Color(0xFFEF2A39),
                             ),
                           ),
                         ),

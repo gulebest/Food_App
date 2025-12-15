@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/cart_provider.dart';
+import '../orders/my_orders_screen.dart';
 
 class SuccessPopup extends StatelessWidget {
   const SuccessPopup({super.key});
@@ -11,68 +12,75 @@ class SuccessPopup extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: Colors.black.withOpacity(0.4),
         body: Center(
           child: Container(
-            width: 300,
+            width: 320,
             padding: const EdgeInsets.all(30),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(22),
               boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 12),
+                BoxShadow(color: Colors.black26, blurRadius: 15),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.redAccent,
-                  child: Icon(Icons.check, color: Colors.white, size: 30),
+                  radius: 32,
+                  backgroundColor: Color(0xFFEF2A39),
+                  child: Icon(Icons.check, color: Colors.white, size: 34),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
                 const Text(
-                  "Success!",
+                  "Order Successful!",
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.redAccent,
+                    color: Color(0xFFEF2A39),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 const Text(
-                  "Your order has been placed successfully.",
+                  "Your payment was successful.\nYou can track your order below.",
                   textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, color: Colors.black54),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 26),
 
-                ElevatedButton(
-                  onPressed: () {
-                    Provider.of<CartProvider>(
-                      context,
-                      listen: false,
-                    ).clearCart();
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Provider.of<CartProvider>(
+                        context,
+                        listen: false,
+                      ).clearCart();
 
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      "/orders",
-                      (_) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 40,
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyOrdersScreen(),
+                        ),
+                        (_) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF2A39),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                    child: const Text(
+                      "View My Orders",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    "View My Orders",
-                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],
