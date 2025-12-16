@@ -51,11 +51,7 @@ class OrderProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    try {
-      myOrders = await ApiService.getMyOrders();
-    } catch (_) {
-      myOrders = [];
-    }
+    myOrders = await ApiService.getMyOrders();
 
     isLoading = false;
     notifyListeners();
@@ -70,11 +66,9 @@ class OrderProvider with ChangeNotifier {
   // ===============================
   void startPolling() {
     _ordersPollingTimer?.cancel();
-
-    _ordersPollingTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => fetchMyOrders(force: true),
-    );
+    _ordersPollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      fetchMyOrders(force: true);
+    });
   }
 
   void stopPolling() {
@@ -83,33 +77,29 @@ class OrderProvider with ChangeNotifier {
   }
 
   // ===============================
-  // FETCH ORDER BY ID (FINAL FIX)
+  // FETCH ORDER BY ID (A2 FINAL FIX)
   // ===============================
   Future<void> fetchOrderById(String id) async {
     isLoading = true;
     notifyListeners();
 
-    try {
-      final Map<String, dynamic>? apiOrder = await ApiService.getOrderById(id);
+    final apiOrder = await ApiService.getOrderById(id);
 
-      if (apiOrder == null) {
-        selectedOrder = null;
-      } else {
-        final order = Map<String, dynamic>.from(apiOrder);
+    if (apiOrder != null) {
+      final order = Map<String, dynamic>.from(apiOrder);
 
-        final newStatus = order["status"];
-        final statusChanged =
-            _lastOrderStatus != null && _lastOrderStatus != newStatus;
+      final newStatus = order["status"];
+      final statusChanged =
+          _lastOrderStatus != null && _lastOrderStatus != newStatus;
 
-        _lastOrderStatus = newStatus;
+      _lastOrderStatus = newStatus;
 
-        selectedOrder = {...order, "_statusChanged": statusChanged};
+      selectedOrder = {...order, "_statusChanged": statusChanged};
 
-        if (newStatus == "delivered") {
-          stopOrderPolling();
-        }
+      if (newStatus == "delivered") {
+        stopOrderPolling();
       }
-    } catch (_) {
+    } else {
       selectedOrder = null;
     }
 
@@ -122,11 +112,11 @@ class OrderProvider with ChangeNotifier {
   // ===============================
   void startOrderPolling(String orderId) {
     _orderDetailsPollingTimer?.cancel();
-
-    _orderDetailsPollingTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => fetchOrderById(orderId),
-    );
+    _orderDetailsPollingTimer = Timer.periodic(const Duration(seconds: 10), (
+      _,
+    ) {
+      fetchOrderById(orderId);
+    });
   }
 
   void stopOrderPolling() {

@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../providers/product_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/user_provider.dart';
 
 import '../../widgets/product_card.dart';
 import '../../widgets/bottom_nav.dart';
@@ -24,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
   int _bottomIndex = 0;
+
+  static const String baseUrl = "http://192.168.137.22:5000";
 
   @override
   void initState() {
@@ -58,17 +61,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  ImageProvider _userAvatar(UserProvider user) {
+    final img = user.currentUser?["profileImage"];
+    if (img != null && img.toString().startsWith("/uploads")) {
+      return NetworkImage(
+        "$baseUrl$img?v=${DateTime.now().millisecondsSinceEpoch}",
+      );
+    }
+    return const AssetImage("assets/profile.png");
+  }
+
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
 
-    // 🔹 Build category list dynamically
+    // 🔹 Categories
     final categories = [
       'All',
       ...{for (var p in productProvider.products) p.category},
     ];
 
-    // 🔹 Apply category + search filter
+    // 🔹 Filters
     final products = productProvider.products.where((p) {
       final matchCategory =
           _selectedCategory == 'All' || p.category == _selectedCategory;
@@ -158,16 +172,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(width: 8),
 
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, color: Colors.white),
+                  // ================= PROFILE AVATAR =================
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: _userAvatar(userProvider),
+                      onBackgroundImageError: (_, __) {},
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // ================= SEARCH BAR =================
+            // ================= SEARCH =================
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
@@ -218,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 10),
 
-            // ================= PRODUCT GRID =================
+            // ================= PRODUCTS =================
             Expanded(
               child: productProvider.isLoading
                   ? const _ShimmerGrid()

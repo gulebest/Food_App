@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io'; // ✅ REQUIRED FOR File
+
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.137.122:5000/api";
+  static const String baseUrl = "http://192.168.137.22:5000/api";
 
   // ======================
   // TOKEN STORAGE
@@ -19,9 +23,11 @@ class ApiService {
     return prefs.getString("token");
   }
 
+  /// ✅ FIXED: remove BOTH token and cached user
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("token");
+    await prefs.remove("user"); // 🔥 critical fix (no ghost auth)
   }
 
   // ======================
@@ -152,6 +158,60 @@ class ApiService {
     }
   }
 
+  // ================================
+  // UPDATE PROFILE (MULTIPART)
+  // ================================
+
+  static Future<Map<String, dynamic>?> updateProfileMultipart({
+    required String name,
+    required String address,
+    String? password,
+    File? avatarFile,
+  }) async {
+    try {
+      final token = await loadToken();
+
+      final request = http.MultipartRequest(
+        "PUT",
+        Uri.parse("$baseUrl/auth/update-profile"),
+      );
+
+      request.headers["Authorization"] = "Bearer $token";
+      request.fields["name"] = name;
+      request.fields["address"] = address;
+      if (password != null) request.fields["password"] = password;
+
+      // 🔽 ONLY THIS PART CHANGED INSIDE updateProfileMultipart
+
+      if (avatarFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            "avatar",
+            avatarFile.path,
+            filename: "avatar.jpg", // 🔥 force extension
+            contentType: MediaType("image", "jpeg"),
+          ),
+        );
+      }
+
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
+
+      print("🔵 PROFILE UPDATE STATUS: ${response.statusCode}");
+      print("🔵 PROFILE UPDATE BODY: $body");
+
+      // ✅ ANY SUCCESS STATUS → REFRESH PROFILE
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return await getProfile();
+      }
+
+      return null;
+    } catch (e) {
+      print("❌ updateProfileMultipart error: $e");
+      return null;
+    }
+  }
+
   // =====================================================
   // ADDRESSES
   // =====================================================
@@ -265,7 +325,6 @@ class ApiService {
     }
   }
 
-  // 🔥 FIXED: sanitize numeric values
   static Future<Map<String, dynamic>?> getOrderById(String id) async {
     try {
       final res = await http.get(

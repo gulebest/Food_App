@@ -13,23 +13,29 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
-  String? _previousStatus; // ✅ A2 STEP 3
+  String? _previousStatus;
+
+  late OrderProvider _orderProvider; // ✅ cached provider
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _orderProvider = Provider.of<OrderProvider>(context, listen: false);
+  }
 
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() {
-      final provider = Provider.of<OrderProvider>(context, listen: false);
-
-      provider.fetchOrderById(widget.orderId);
-      provider.startOrderPolling(widget.orderId);
+      _orderProvider.fetchOrderById(widget.orderId);
+      _orderProvider.startOrderPolling(widget.orderId);
     });
   }
 
   @override
   void dispose() {
-    Provider.of<OrderProvider>(context, listen: false).stopOrderPolling();
+    _orderProvider.stopOrderPolling(); // ✅ SAFE
     super.dispose();
   }
 
