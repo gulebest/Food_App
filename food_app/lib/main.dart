@@ -12,6 +12,7 @@ import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/address_provider.dart';
+import 'providers/support_provider.dart';
 
 // Screens
 import 'screens/splash/splash_screen.dart';
@@ -33,13 +34,14 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider(
             create: (_) => AuthProvider()..loadToken(),
-          ), // ✅
+          ), // auth token init (unchanged)
           ChangeNotifierProvider(create: (_) => UserProvider()),
           ChangeNotifierProvider(create: (_) => ProductProvider()),
           ChangeNotifierProvider(create: (_) => CartProvider()),
           ChangeNotifierProvider(create: (_) => FavoriteProvider()),
           ChangeNotifierProvider(create: (_) => OrderProvider()),
           ChangeNotifierProvider(create: (_) => AddressProvider()),
+          ChangeNotifierProvider(create: (_) => SupportProvider()), // ✅ ADDED
         ],
         child: const MyApp(),
       ),

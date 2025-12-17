@@ -1,6 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/user_provider.dart';
+import '../../providers/support_provider.dart';
+import '../../services/api_service.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -10,124 +13,108 @@ class SupportScreen extends StatefulWidget {
 }
 
 class _SupportScreenState extends State<SupportScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [];
-  final ScrollController _scrollController = ScrollController();
-  bool _isTyping = false;
+  final TextEditingController _controller = TextEditingController();
 
-  final List<String> _autoReplies = [
-    "Thanks for reaching out! Our support team will get back to you shortly.",
-    "We're checking your query and will respond soon!",
-    "Your message is important to us. Please wait a moment.",
-    "Thanks for contacting support! We're on it.",
-    "We appreciate your patience. Someone will assist you shortly.",
-    "Got your message! Let me find the best answer for you.",
-    "Hang tight! We're working on your request.",
-    "Thanks! Our support team will reply shortly.",
-  ];
-
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 150), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _init();
   }
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  Future<void> _init() async {
+    final token = await ApiService.loadToken();
+    if (token == null) return;
 
-    setState(() {
-      _messages.add({"sender": "user", "text": text});
-      _isTyping = true;
-    });
+    final supportProvider = Provider.of<SupportProvider>(
+      context,
+      listen: false,
+    );
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    _messageController.clear();
-    _scrollToBottom();
+    await supportProvider.loadMessages(token);
 
-    // Simulate AI-like auto-reply with random response after delay
-    Future.delayed(const Duration(seconds: 2), () {
-      final random = Random();
-      final reply = _autoReplies[random.nextInt(_autoReplies.length)];
-
-      setState(() {
-        _isTyping = false;
-        _messages.add({"sender": "support", "text": reply});
-      });
-
-      _scrollToBottom();
-    });
+    final userId = userProvider.currentUser?["_id"];
+    if (userId != null) {
+      supportProvider.initSocket(userId);
+    }
   }
 
   @override
   void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
+    Provider.of<SupportProvider>(context, listen: false).disposeSocket();
+    _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    final token = await ApiService.loadToken();
+    if (token == null) return;
+
+    _controller.clear();
+    Provider.of<SupportProvider>(
+      context,
+      listen: false,
+    ).sendMessage(token, text);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          "Customer Support",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-      ),
+    final userProvider = Provider.of<UserProvider>(context);
+    final supportProvider = Provider.of<SupportProvider>(context);
 
+    if (!userProvider.loggedIn) {
+      return const Scaffold(
+        body: Center(child: Text("Please log in to contact support")),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Support")),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + (_isTyping ? 1 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount:
+                  supportProvider.messages.length +
+                  (supportProvider.isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                if (_isTyping && index == _messages.length) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text("Support is typing..."),
-                    ),
+                if (supportProvider.isTyping &&
+                    index == supportProvider.messages.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text("Support is typing..."),
                   );
                 }
 
-                final msg = _messages[index];
+                final msg = supportProvider.messages[index];
                 final isUser = msg["sender"] == "user";
+                final failed = msg["failed"] == true;
 
                 return Align(
                   alignment: isUser
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
                   child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color(0xFFEF2A39).withOpacity(0.8)
-                          : Colors.grey.shade200,
+                      color: failed
+                          ? Colors.red.shade300
+                          : isUser
+                          ? Colors.green.shade400
+                          : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      msg["text"],
+                      msg["message"],
                       style: TextStyle(
-                        fontSize: 15,
                         color: isUser ? Colors.white : Colors.black87,
                       ),
                     ),
@@ -136,41 +123,28 @@ class _SupportScreenState extends State<SupportScreen> {
               },
             ),
           ),
-
-          // Input section
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: Colors.white,
+          const Divider(height: 1),
+          SafeArea(
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: "Type a message...",
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide.none,
+                    controller: _controller,
+                    onChanged: (_) => supportProvider.emitTyping(),
+                    onSubmitted: (_) => supportProvider.emitStopTyping(),
+                    decoration: const InputDecoration(
+                      hintText: "Type your message…",
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
                     ),
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: _sendMessage,
-                  child: CircleAvatar(
-                    radius: 25,
-                    backgroundColor: const Color(0xFFEF2A39),
-                    child: const Icon(Icons.send, color: Colors.white),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
                 ),
               ],
             ),

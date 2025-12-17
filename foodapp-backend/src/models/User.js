@@ -7,6 +7,14 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   profileImage: { type: String, default: 'assets/user.png' },
   address: { type: String, default: '' },
+
+  // ✅ NEW (required for admin panel)
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
+
   createdAt: { type: Date, default: Date.now }
 });
 

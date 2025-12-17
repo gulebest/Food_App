@@ -57,6 +57,49 @@ class ApiService {
     }
   }
 
+  // 🔐 Get token
+  static Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("token");
+  }
+
+  // ===============================
+  // SUPPORT (USED BY SupportProvider)
+  // ===============================
+
+  static Future<List<dynamic>> getSupportMessages(String token) async {
+    final res = await http.get(
+      Uri.parse("$baseUrl/support/my"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load support messages");
+    }
+
+    return jsonDecode(res.body);
+  }
+
+  static Future<List<dynamic>> sendSupportMessage(
+    String token,
+    String message,
+  ) async {
+    final res = await http.post(
+      Uri.parse("$baseUrl/support/send"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"message": message}),
+    );
+
+    if (res.statusCode != 201) {
+      throw Exception("Failed to send support message");
+    }
+
+    return jsonDecode(res.body); // returns array
+  }
+
   // =====================================================
   // AUTH
   // =====================================================
