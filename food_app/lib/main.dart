@@ -15,7 +15,6 @@ import 'providers/address_provider.dart';
 import 'providers/support_provider.dart';
 import 'providers/admin_support_provider.dart';
 
-// ✅ NETWORK SERVICE
 import 'services/network_service.dart';
 
 // Screens
@@ -38,7 +37,9 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => NetworkService()),
 
+          // ✅ AUTO LOGIN TRIGGERED HERE
           ChangeNotifierProvider(create: (_) => AuthProvider()..loadToken()),
+
           ChangeNotifierProvider(create: (_) => UserProvider()),
           ChangeNotifierProvider(create: (_) => ProductProvider()),
           ChangeNotifierProvider(create: (_) => CartProvider()),
@@ -73,7 +74,7 @@ class MyApp extends StatelessWidget {
       builder: DevicePreview.appBuilder,
       debugShowCheckedModeBanner: false,
       title: 'Food App',
-      home: const SplashScreen(),
+      home: const SplashScreen(), // Splash decides navigation
       routes: {
         '/cart': (_) => const CartScreen(),
         '/address': (_) => const AddressSelectionScreen(),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
+import '../../services/network_service.dart';
 import '../home/home_screen.dart';
 import 'register_screen.dart';
 
@@ -34,30 +35,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
               "Welcome Back",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 8),
-
             const Text(
               "Login to your account",
               style: TextStyle(color: Colors.black54, fontSize: 16),
             ),
-
             const SizedBox(height: 25),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
                 children: [
                   TextField(controller: email, decoration: _field("Email")),
                   const SizedBox(height: 18),
-
                   TextField(
                     controller: password,
                     obscureText: hidePass,
@@ -71,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -89,9 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -113,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
                 ],
               ),
@@ -126,16 +116,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (email.text.isEmpty || password.text.isEmpty) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter email & password")),
       );
       return;
     }
 
+    final network = context.read<NetworkService>();
+
+    // 🚫 OFFLINE GUARD
+    if (!network.isOnline) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("No internet connection")));
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = context.read<UserProvider>();
     final message = await userProvider.login(
       email.text.trim(),
       password.text.trim(),

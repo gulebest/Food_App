@@ -7,11 +7,14 @@ import '../services/api_service.dart';
 class AuthProvider with ChangeNotifier {
   String? token;
   Map<String, dynamic>? user;
+
   bool isLoading = false;
-  bool isInitialized = false; // ✅ NEW
+  bool isInitialized = false;
+
+  bool get isAuthenticated => token != null;
 
   // -------------------------
-  // AUTO LOGIN (LOAD TOKEN)
+  // AUTO LOGIN (OFFLINE SAFE)
   // -------------------------
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,16 +23,15 @@ class AuthProvider with ChangeNotifier {
     final savedUser = prefs.getString("user");
 
     if (token != null && savedUser != null) {
-      user = jsonDecode(savedUser);
-    }
-
-    // Validate token with backend
-    if (token != null) {
-      final profile = await ApiService.getProfile();
-      if (profile == null) {
-        await logout();
+      try {
+        user = jsonDecode(savedUser);
+      } catch (_) {
+        user = null;
       }
     }
+
+    // 🚫 DO NOT call backend here
+    // Offline apps must trust local token
 
     isInitialized = true;
     notifyListeners();

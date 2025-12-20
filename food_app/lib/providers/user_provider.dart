@@ -1,31 +1,40 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
   bool isAuthenticated = false;
   Map<String, dynamic>? currentUser;
 
+  static const _userKey = "user";
+
   // ---------------------------
-  // AUTO LOGIN
+  // AUTO LOGIN (100% OFFLINE SAFE)
   // ---------------------------
   Future<void> autoLogin() async {
-    final token = await ApiService.loadToken();
+    final prefs = await SharedPreferences.getInstance();
 
-    if (token == null) {
+    final token = prefs.getString("token");
+    final cachedUser = prefs.getString(_userKey);
+
+    // ❌ No session
+    if (token == null || cachedUser == null) {
       isAuthenticated = false;
       currentUser = null;
       notifyListeners();
       return;
     }
 
-    final profile = await ApiService.getProfile();
-
-    if (profile != null) {
-      currentUser = Map<String, dynamic>.from(profile);
+    try {
+      // ✅ TRUST LOCAL CACHE ONLY
+      currentUser = jsonDecode(cachedUser);
       isAuthenticated = true;
-    } else {
-      await ApiService.logout();
+    } catch (_) {
+      // ❌ Corrupted cache → force logout
+      await prefs.remove("token");
+      await prefs.remove(_userKey);
       isAuthenticated = false;
       currentUser = null;
     }
@@ -40,7 +49,11 @@ class UserProvider extends ChangeNotifier {
     final res = await ApiService.login(email, password);
 
     if (res["success"] == true && res["token"] != null) {
+      final prefs = await SharedPreferences.getInstance();
+
       await ApiService.saveToken(res["token"]);
+      await prefs.setString(_userKey, jsonEncode(res["user"]));
+
       currentUser = Map<String, dynamic>.from(res["user"]);
       isAuthenticated = true;
       notifyListeners();
@@ -62,7 +75,11 @@ class UserProvider extends ChangeNotifier {
     final res = await ApiService.register(name, email, phone, password);
 
     if (res["success"] == true && res["token"] != null) {
+      final prefs = await SharedPreferences.getInstance();
+
       await ApiService.saveToken(res["token"]);
+      await prefs.setString(_userKey, jsonEncode(res["user"]));
+
       currentUser = Map<String, dynamic>.from(res["user"]);
       isAuthenticated = true;
       notifyListeners();
@@ -73,7 +90,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   // ---------------------------
-  // UPDATE PROFILE (FIXED)
+  // UPDATE PROFILE
   // ---------------------------
   Future<bool> updateUserProfile({
     required String name,
@@ -90,10 +107,12 @@ class UserProvider extends ChangeNotifier {
 
     if (result == null) return false;
 
-    // ✅ SUPPORT BOTH RESPONSE SHAPES
-    final updatedUser = result["user"] != null ? result["user"] : result;
-
+    final updatedUser = result["user"] ?? result;
     currentUser = Map<String, dynamic>.from(updatedUser);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userKey, jsonEncode(currentUser));
+
     notifyListeners();
     return true;
   }
@@ -102,7 +121,10 @@ class UserProvider extends ChangeNotifier {
   // LOGOUT
   // ---------------------------
   Future<void> logout() async {
-    await ApiService.logout();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("token");
+    await prefs.remove(_userKey);
+
     isAuthenticated = false;
     currentUser = null;
     notifyListeners();

@@ -31,7 +31,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
     _controller.forward();
   }
 
@@ -39,7 +38,12 @@ class _SplashScreenState extends State<SplashScreen>
     final userProvider = context.read<UserProvider>();
 
     await Future.delayed(const Duration(seconds: 2));
-    await userProvider.autoLogin();
+
+    try {
+      await userProvider.autoLogin();
+    } catch (_) {
+      // 🚫 NEVER crash splash
+    }
 
     if (!mounted) return;
 
@@ -55,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose(); // ✅ safe
+    _controller.dispose();
     super.dispose();
   }
 

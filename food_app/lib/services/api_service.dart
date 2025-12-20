@@ -22,6 +22,26 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("token");
   }
+  // ======================
+  // USER CACHE (OFFLINE SUPPORT)
+  // ======================
+
+  static Future<void> saveCachedUser(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("user", jsonEncode(user));
+  }
+
+  static Future<Map<String, dynamic>?> loadCachedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString("user");
+    if (raw == null) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  static Future<void> clearCachedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("user");
+  }
 
   /// ✅ FIXED: remove BOTH token and cached user
   static Future<void> logout() async {
