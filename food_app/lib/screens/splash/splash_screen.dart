@@ -14,8 +14,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
@@ -36,30 +36,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuth() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = context.read<UserProvider>();
 
-    await Future.delayed(const Duration(seconds: 2)); // Splash wait
-
+    await Future.delayed(const Duration(seconds: 2));
     await userProvider.autoLogin();
 
     if (!mounted) return;
 
-    if (userProvider.isAuthenticated) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => userProvider.isAuthenticated
+            ? const HomeScreen()
+            : const LoginScreen(),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller.dispose(); // ✅ safe
     super.dispose();
   }
 

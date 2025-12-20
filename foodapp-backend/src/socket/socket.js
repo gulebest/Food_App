@@ -4,9 +4,7 @@ let io;
 
 exports.init = (server) => {
   io = new Server(server, {
-    cors: {
-      origin: "*",
-    },
+    cors: { origin: "*" },
   });
 
   io.on("connection", (socket) => {
@@ -14,14 +12,15 @@ exports.init = (server) => {
 
     socket.on("join", (userId) => {
       socket.join(userId);
+      socket.userId = userId; // ✅ track owner
     });
 
-    socket.on("typing", (userId) => {
-      socket.to(userId).emit("typing");
+    socket.on("typing", (targetId) => {
+      socket.to(targetId).emit("typing");
     });
 
-    socket.on("stop_typing", (userId) => {
-      socket.to(userId).emit("stop_typing");
+    socket.on("stop_typing", (targetId) => {
+      socket.to(targetId).emit("stop_typing");
     });
 
     socket.on("disconnect", () => {

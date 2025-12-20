@@ -14,36 +14,45 @@ class SupportScreen extends StatefulWidget {
 
 class _SupportScreenState extends State<SupportScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  late SupportProvider _supportProvider;
+  bool _socketInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    _supportProvider = context.read<SupportProvider>();
     _init();
   }
 
   Future<void> _init() async {
     final token = await ApiService.loadToken();
-    if (token == null) return;
+    final userProvider = context.read<UserProvider>();
 
-    final supportProvider = Provider.of<SupportProvider>(
-      context,
-      listen: false,
-    );
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (!mounted || token == null) return;
 
-    await supportProvider.loadMessages(token);
+    await _supportProvider.loadMessages(token);
 
     final userId = userProvider.currentUser?["_id"];
-    if (userId != null) {
-      supportProvider.initSocket(userId);
+    if (userId != null && !_socketInitialized) {
+      _supportProvider.initSocket(userId);
+      _socketInitialized = true;
     }
+
+    _scrollToBottom();
   }
 
-  @override
-  void dispose() {
-    Provider.of<SupportProvider>(context, listen: false).disposeSocket();
-    _controller.dispose();
-    super.dispose();
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _sendMessage() async {
@@ -54,16 +63,22 @@ class _SupportScreenState extends State<SupportScreen> {
     if (token == null) return;
 
     _controller.clear();
-    Provider.of<SupportProvider>(
-      context,
-      listen: false,
-    ).sendMessage(token, text);
+    await _supportProvider.sendMessage(token, text);
+    _scrollToBottom();
+  }
+
+  @override
+  void dispose() {
+    _supportProvider.disposeSocket();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final supportProvider = Provider.of<SupportProvider>(context);
+    final userProvider = context.watch<UserProvider>();
+    final supportProvider = context.watch<SupportProvider>();
 
     if (!userProvider.loggedIn) {
       return const Scaffold(
@@ -72,16 +87,18 @@ class _SupportScreenState extends State<SupportScreen> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: const Text("Support")),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount:
                   supportProvider.messages.length +
                   (supportProvider.isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
+              itemBuilder: (_, index) {
                 if (supportProvider.isTyping &&
                     index == supportProvider.messages.length) {
                   return const Padding(
@@ -92,7 +109,7 @@ class _SupportScreenState extends State<SupportScreen> {
 
                 final msg = supportProvider.messages[index];
                 final isUser = msg["sender"] == "user";
-                final failed = msg["failed"] == true;
+                final status = msg["status"];
 
                 return Align(
                   alignment: isUser
@@ -105,48 +122,82 @@ class _SupportScreenState extends State<SupportScreen> {
                     ),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: failed
-                          ? Colors.red.shade300
-                          : isUser
+                      color: isUser
                           ? Colors.green.shade400
                           : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      msg["message"],
-                      style: TextStyle(
-                        color: isUser ? Colors.white : Colors.black87,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          msg["message"] ?? "",
+                          style: TextStyle(
+                            color: isUser ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        if (isUser) ...[
+                          const SizedBox(width: 6),
+                          if (status == "sending")
+                            const Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: Colors.white70,
+                            ),
+                          if (status == "failed")
+                            GestureDetector(
+                              onTap: () async {
+                                final token = await ApiService.loadToken();
+                                if (token != null) {
+                                  supportProvider.retryMessage(token, msg);
+                                }
+                              },
+                              child: const Icon(
+                                Icons.error,
+                                size: 14,
+                                color: Colors.yellow,
+                              ),
+                            ),
+                          if (status == "sent")
+                            const Icon(
+                              Icons.check,
+                              size: 14,
+                              color: Colors.white70,
+                            ),
+                        ],
+                      ],
                     ),
                   ),
                 );
               },
             ),
           ),
+
           const Divider(height: 1),
+
           SafeArea(
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    onChanged: (_) => supportProvider.emitTyping(),
-                    onSubmitted: (_) => supportProvider.emitStopTyping(),
-                    decoration: const InputDecoration(
-                      hintText: "Type your message…",
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      onChanged: (_) => supportProvider.emitTyping(),
+                      onSubmitted: (_) => supportProvider.emitStopTyping(),
+                      decoration: const InputDecoration(
+                        hintText: "Type your message…",
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.send),
+                    onPressed: _sendMessage,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

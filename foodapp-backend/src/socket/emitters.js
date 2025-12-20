@@ -1,11 +1,13 @@
 const { getIO } = require("./socket");
 
-exports.emitNewMessage = (userId, message) => {
+exports.emitNewMessage = (receiverId, message) => {
   const io = getIO();
-  io.to(userId.toString()).emit("new_message", message);
+
+  // ✅ emit ONLY to receiver (not sender)
+  io.to(receiverId.toString()).emit("new_message", message);
 };
 
-exports.emitRemoveMessage = (userId, messageId) => {
+exports.emitRemoveMessage = (receiverId, messageId) => {
   const io = getIO();
-  io.to(userId.toString()).emit("remove_message", messageId);
+  io.to(receiverId.toString()).emit("remove_message", messageId);
 };

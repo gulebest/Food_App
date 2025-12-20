@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screen.dart';
 import '../../utils/image_converter.dart';
+import '../admin/admin_support_screen.dart'; // 🆕 ADD
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -78,7 +79,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return const AssetImage("assets/profile.png");
   }
 
-  /// 🔥 FULL SCREEN TOP-CENTER IMAGE (TELEGRAM STYLE)
   void _openAvatarPreview(UserProvider user) {
     showDialog(
       context: context,
@@ -88,15 +88,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                /// IMAGE TOP CENTER
                 AspectRatio(
                   aspectRatio: 3 / 4,
                   child: Image(image: _profileImage(user), fit: BoxFit.contain),
                 ),
-
                 const SizedBox(height: 20),
-
-                /// BUTTONS
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -117,9 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-
                 const Spacer(),
-
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
@@ -141,17 +135,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = Provider.of<UserProvider>(context);
     _syncUser(user);
 
+    final isAdmin = user.currentUser?["isAdmin"] == true; // 🆕
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-        backgroundColor: Colors.red, // ✅ RED APPBAR
-      ),
+      appBar: AppBar(title: const Text("Profile"), backgroundColor: Colors.red),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔝 TOP LEFT AVATAR
             GestureDetector(
               onTap: () => _openAvatarPreview(user),
               child: Stack(
@@ -177,7 +169,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 30),
 
-            /// ✏️ EDIT / 💾 SAVE
             ElevatedButton(
               onPressed: _uploading
                   ? null
@@ -195,7 +186,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
 
                         setState(() => _uploading = false);
-
                         if (!ok) return;
 
                         _pickedImage = null;
@@ -211,9 +201,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text(_editing ? "Save" : "Edit"),
             ),
 
+            // 🆕 ADMIN SUPPORT BUTTON
+            if (isAdmin) ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.support_agent),
+                label: const Text("Admin Support Dashboard"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AdminSupportScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+
             const SizedBox(height: 12),
 
-            /// 🚪 LOGOUT
             ElevatedButton(
               onPressed: () async {
                 await user.logout();
