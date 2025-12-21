@@ -6,7 +6,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SupportProvider extends ChangeNotifier {
-  final String baseUrl = "http://192.168.137.22:5000";
+  final String baseUrl = "https://foodapp-backend-796q.onrender.com";
 
   List<Map<String, dynamic>> messages = [];
   bool loading = false;
@@ -209,6 +209,7 @@ class SupportProvider extends ChangeNotifier {
   // ===============================
   // TYPING
   // ===============================
-  void emitTyping() => socket?.emit("typing");
-  void emitStopTyping() => socket?.emit("stop_typing");
+  void emitTyping(String targetId) => socket?.emit("typing", targetId);
+
+  void emitStopTyping(String targetId) => socket?.emit("stop_typing", targetId);
 }

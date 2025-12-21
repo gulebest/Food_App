@@ -6,7 +6,7 @@ const path = require("path");
 const http = require("http");
 
 const connectDB = require("./config/db");
-const socket = require("./socket/socket"); // 🆕
+const socket = require("./socket/socket");
 
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
@@ -25,7 +25,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// ✅ SERVE UPLOADED IMAGES (DO NOT TOUCH)
+// ✅ SERVE UPLOADED IMAGES (REQUIRED FOR RENDER)
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {

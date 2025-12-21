@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screen.dart';
 import '../../utils/image_converter.dart';
-import '../admin/admin_support_screen.dart'; // 🆕 ADD
+import '../admin/admin_support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -29,7 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   Map<String, dynamic>? _lastUser;
 
-  static const String baseUrl = "http://192.168.137.22:5000";
+  // ✅ Base domain only (NO /api)
+  static const String baseUrl = "https://foodapp-backend-796q.onrender.com";
 
   @override
   void initState() {
@@ -70,10 +71,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final img = user.currentUser?["profileImage"];
+
+    // If backend returned relative upload path
     if (img != null && img.toString().startsWith("/uploads")) {
       return NetworkImage(
         "$baseUrl$img?v=${DateTime.now().millisecondsSinceEpoch}",
       );
+    }
+
+    // If backend ever returns full URL (future-safe)
+    if (img != null && img.toString().startsWith("http")) {
+      return NetworkImage(img);
     }
 
     return const AssetImage("assets/profile.png");
@@ -135,12 +143,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = Provider.of<UserProvider>(context);
     _syncUser(user);
 
-    final isAdmin = user.currentUser?["isAdmin"] == true; // 🆕
+    final isAdmin = user.currentUser?["isAdmin"] == true;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, // ✅ IMPORTANT
       appBar: AppBar(title: const Text("Profile"), backgroundColor: Colors.red),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.of(context).viewInsets.bottom + 20, // ✅ KEY FIX
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -201,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text(_editing ? "Save" : "Edit"),
             ),
 
-            // 🆕 ADMIN SUPPORT BUTTON
             if (isAdmin) ...[
               const SizedBox(height: 12),
               ElevatedButton.icon(

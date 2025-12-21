@@ -5,7 +5,7 @@ import '../services/admin_support_api.dart';
 import '../services/network_service.dart';
 
 class AdminSupportProvider extends ChangeNotifier {
-  final String baseUrl = "http://192.168.137.22:5000";
+  final String baseUrl = "https://foodapp-backend-796q.onrender.com";
 
   List<dynamic> conversations = [];
   List<dynamic> messages = [];

@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   int _bottomIndex = 0;
 
-  static const String baseUrl = "http://192.168.137.22:5000";
+  static const String baseUrl = "https://foodapp-backend-796q.onrender.com";
 
   @override
   void initState() {
@@ -63,11 +63,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   ImageProvider _userAvatar(UserProvider user) {
     final img = user.currentUser?["profileImage"];
-    if (img != null && img.toString().startsWith("/uploads")) {
+
+    if (img != null &&
+        img.toString().startsWith("/uploads") &&
+        img.toString().isNotEmpty) {
       return NetworkImage(
         "$baseUrl$img?v=${DateTime.now().millisecondsSinceEpoch}",
       );
     }
+
+    // ✅ fallback if image missing / 404 / offline
     return const AssetImage("assets/profile.png");
   }
 

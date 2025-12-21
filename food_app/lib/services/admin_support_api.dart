@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AdminSupportApi {
-  static const baseUrl = "http://192.168.137.22:5000";
+  static const baseUrl = "https://foodapp-backend-796q.onrender.com";
 
   // ===============================
   // GET ALL CONVERSATIONS (OFFLINE SAFE)

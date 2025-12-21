@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
       email,
       phone,
       password: hashedPassword,
-      profileImage: "assets/profile.png", // ✅ default
+      profileImage: "assets/profile.png", // ✅ default unchanged
     });
 
     await user.save();
@@ -92,7 +92,8 @@ exports.updateProfile = async (req, res) => {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
-    // ✅ SAVE IMAGE PATH CORRECTLY
+    // ✅ IMPORTANT FIX
+    // Save ONLY relative path, never IP / domain
     if (req.file) {
       updateData.profileImage = `/uploads/avatars/${req.file.filename}`;
     }

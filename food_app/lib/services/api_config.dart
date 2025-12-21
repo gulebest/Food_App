@@ -1,20 +1,8 @@
-import 'dart:io';
-
 class ApiConfig {
-  // -------------------------
-  // BASE URL
-  // -------------------------
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      // If running on Android emulator → host PC = 10.0.2.2
-      return "http://10.0.2.2:5000/api";
-    } else if (Platform.isIOS) {
-      return "http://localhost:5000/api";
-    } else {
-      // REAL DEVICE → MUST use your laptop WiFi IP
-      return "http://192.168.137.22:5000/api"; // ✅ your confirmed working IP
-    }
-  }
+  // ===============================
+  // PRODUCTION BASE URL (RENDER)
+  // ===============================
+  static const String baseUrl = "https://foodapp-backend-796q.onrender.com/api";
 
   // AUTH
   static String get register => "$baseUrl/auth/register";

@@ -7,7 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.137.22:5000/api";
+  static const String baseUrl = "https://foodapp-backend-796q.onrender.com/api";
 
   // ======================
   // TOKEN STORAGE

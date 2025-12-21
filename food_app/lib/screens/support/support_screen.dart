@@ -79,6 +79,7 @@ class _SupportScreenState extends State<SupportScreen> {
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     final supportProvider = context.watch<SupportProvider>();
+    final userId = userProvider.currentUser?["_id"];
 
     if (!userProvider.loggedIn) {
       return const Scaffold(
@@ -184,8 +185,15 @@ class _SupportScreenState extends State<SupportScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      onChanged: (_) => supportProvider.emitTyping(),
-                      onSubmitted: (_) => supportProvider.emitStopTyping(),
+
+                      onChanged: (_) {
+                        if (userId != null) supportProvider.emitTyping(userId);
+                      },
+                      onSubmitted: (_) {
+                        if (userId != null)
+                          supportProvider.emitStopTyping(userId);
+                      },
+
                       decoration: const InputDecoration(
                         hintText: "Type your message…",
                         border: InputBorder.none,
