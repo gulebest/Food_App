@@ -26,5 +26,5 @@ This Food Delivery mobile app is developed using Flutter to provide a smooth, cr
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/food-delivery-app.git
+   git clone https://github.com/your-username/food-delivery-app](https://github.com/gulebest/Food_App/tree/main).git
    cd food-delivery-app
