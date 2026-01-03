@@ -9,16 +9,16 @@ This Food Delivery mobile app is developed using Flutter to provide a smooth, cr
 - Browse restaurants and their menus with images and descriptions  
 - Add, customize, and manage items in the shopping cart  
 - Real-time order tracking with status updates  
-- Secure payment processing (mock or integrated)  
-- User authentication and profile management (optional)  
+- Secure payment processing   
+- User authentication and profile management  
 - Responsive design working on both Android and iOS devices
 
 ## Technologies Used
 
 - Flutter & Dart  
-- State management (Provider, Riverpod, Bloc, or your choice)  
+- State management Provider 
 - RESTful API integration for backend communication  
-- Firebase or other backend services (optional)  
+- MongoDB Database
 - Secure payment SDK (optional)
 
 ## Installation
