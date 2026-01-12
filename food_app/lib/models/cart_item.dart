@@ -1,5 +1,5 @@
 class CartItem {
-  final String productId; 
+  final String productId; // mongoDB Id
   final String name;
   final String image;
   final double price;
