@@ -77,7 +77,7 @@ exports.me = async (req, res) => {
   }
 };
 
-// ---------------- UPDATE PROFILE ----------------
+// ---------------- UPDATE PROFILE ---------------
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
