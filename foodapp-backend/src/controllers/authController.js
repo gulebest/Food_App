@@ -93,7 +93,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     // ✅ IMPORTANT FIX
-    // Save ONLY relative path, never IP / 
+    // Save ONLY relative path, never IP / domain
     if (req.file) {
       updateData.profileImage = `/uploads/avatars/${req.file.filename}`;
     }
