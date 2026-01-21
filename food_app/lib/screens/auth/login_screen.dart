@@ -131,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ).showSnackBar(const SnackBar(content: Text("No internet connection")));
       return;
     }
-
     setState(() => isLoading = true);
 
     final userProvider = context.read<UserProvider>();
