@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final network = context.read<NetworkService>();
 
-    // 🚫 OFFLINE GROUND
+    // 🚫 OFFLINE 
     if (!network.isOnline) {
       ScaffoldMessenger.of(
         context,
