@@ -2,7 +2,7 @@
 
 ## About
 
-This Food Delivery mobile app is developed using Flutter to provide a smooth, cross-platform solution for ordering food effortlessly. The app enables users to explore multiple restaurants, view detailed menus, customize their orders, and track deliveries in real-time. With a clean, responsive UI and secure payment integration, it combines user convenience with efficient app architecture. This project highlights Flutter’s capabilities in building performant mobile apps with modern state management and API integration
+This Food Delivery mobile app is developed using Flutter to provide a smooth, cross-platform solution for ordering food effortlessly. The app enables users to explore multiple restaurants, view detailed menus, customize their orders, and track deliveries in real-time. With a clean, responsive UI and secure payment integration, it combines user convenience with efficient app architecture. This project highlights Flutter’s capabilities in building performant mobile apps with modern state management and API integration.
 
 ## Features
 
